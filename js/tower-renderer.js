@@ -161,14 +161,23 @@ class TowerRenderer {
         );
 
         readersInElevator.forEach(reader => {
+            // Find the floor's visual position (floors are rendered in reverse order)
+            const floor = this.game.getFloor(reader.floorId);
+            if (!floor) return;
+
+            const floors = [...this.game.floors].reverse();
+            const visualIndex = floors.findIndex(f => f.id === floor.id);
+            if (visualIndex === -1) return;
+
             // Calculate elevator position based on time
             const totalTime = reader.elevatorArrivalTime - (reader.elevatorArrivalTime - 2000 - (reader.floorNumber * 500));
             const elapsed = now - (reader.elevatorArrivalTime - totalTime);
             const progress = Math.min(1, Math.max(0, elapsed / totalTime));
 
             // Calculate Y position (ground to destination floor)
+            // Visual index 0 is top floor, higher index is lower floor
             const groundY = this.height - 40;
-            const destFloorY = this.height - 40 - (reader.floorNumber * this.floorHeight);
+            const destFloorY = this.height - 40 - ((visualIndex + 1) * this.floorHeight);
             const elevatorY = groundY - (progress * (groundY - destFloorY)) - this.elevatorCarHeight;
 
             // Draw elevator car
