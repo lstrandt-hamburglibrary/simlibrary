@@ -1229,6 +1229,225 @@ body {
 }
 
 /* ===================================
+   Achievements Modal
+   =================================== */
+
+.achievements-summary {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: var(--gradient-purple);
+    border-radius: var(--radius-md);
+    color: white;
+}
+
+.achievements-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.achievement-card {
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.achievement-card.unlocked {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #000;
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.achievement-card.locked {
+    opacity: 0.6;
+    filter: grayscale(50%);
+}
+
+.achievement-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.achievement-icon {
+    font-size: 36px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.achievement-name {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.achievement-description {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.achievement-card.unlocked .achievement-description {
+    color: #333;
+}
+
+.achievement-progress {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.achievement-card.unlocked .achievement-progress {
+    color: #222;
+    font-weight: bold;
+}
+
+.achievement-reward {
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-sm);
+    margin-top: 10px;
+}
+
+.achievement-card.unlocked .achievement-reward {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.achievement-unlocked-date {
+    font-size: 10px;
+    color: #555;
+    text-align: center;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+/* ===================================
+   Reader Collection Modal
+   =================================== */
+
+.collection-summary {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: var(--gradient-blue);
+    border-radius: var(--radius-md);
+    color: white;
+}
+
+.collection-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.collection-section h4 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 5px;
+}
+
+.collection-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.reader-card {
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reader-card.discovered {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.reader-card.undiscovered {
+    opacity: 0.5;
+    filter: grayscale(80%);
+}
+
+.reader-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.reader-emoji {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.reader-card.undiscovered .reader-emoji {
+    filter: brightness(0) opacity(0.3);
+}
+
+.reader-name {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.reader-type-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.reader-card.discovered .reader-type-label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.reader-stats {
+    font-size: 12px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.reader-card.discovered .reader-stats {
+    border-top-color: rgba(255, 255, 255, 0.3);
+}
+
+.reader-stat-line {
+    margin: 4px 0;
+}
+
+.reader-ability {
+    font-size: 11px;
+    font-style: italic;
+    margin-top: 8px;
+    padding: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-sm);
+}
+
+.reader-card.discovered .reader-ability {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* ===================================
    Responsive Design
    =================================== */
 
@@ -1265,6 +1484,14 @@ body {
     }
 
     .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .achievements-list {
+        grid-template-columns: 1fr;
+    }
+
+    .collection-list {
         grid-template-columns: repeat(2, 1fr);
     }
 

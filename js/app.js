@@ -120,6 +120,40 @@ function setupEventListeners() {
             closeStatsModal();
         }
     });
+
+    // Achievements button - opens achievements modal
+    document.getElementById('open-achievements-btn').addEventListener('click', () => {
+        openAchievementsModal();
+    });
+
+    // Achievements modal close button
+    document.getElementById('close-achievements-modal').addEventListener('click', () => {
+        closeAchievementsModal();
+    });
+
+    // Close achievements modal when clicking outside
+    document.getElementById('achievements-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'achievements-modal') {
+            closeAchievementsModal();
+        }
+    });
+
+    // Reader collection button - opens collection modal
+    document.getElementById('open-collection-btn').addEventListener('click', () => {
+        openCollectionModal();
+    });
+
+    // Collection modal close button
+    document.getElementById('close-collection-modal').addEventListener('click', () => {
+        closeCollectionModal();
+    });
+
+    // Close collection modal when clicking outside
+    document.getElementById('collection-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'collection-modal') {
+            closeCollectionModal();
+        }
+    });
 }
 
 /**
@@ -737,6 +771,167 @@ function openStatsModal() {
  */
 function closeStatsModal() {
     document.getElementById('stats-modal').classList.remove('active');
+}
+
+/**
+ * Open achievements modal
+ */
+function openAchievementsModal() {
+    const achievements = game.achievements;
+    const unlockedCount = achievements.filter(a => a.unlocked).length;
+
+    // Update summary counts
+    document.getElementById('achievements-unlocked-count').textContent = unlockedCount;
+    document.getElementById('achievements-total-count').textContent = achievements.length;
+
+    // Render achievements list
+    const listEl = document.getElementById('achievements-list');
+    listEl.innerHTML = '';
+
+    achievements.forEach(achievement => {
+        const card = document.createElement('div');
+        card.className = `achievement-card ${achievement.unlocked ? 'unlocked' : 'locked'}`;
+
+        // Get current progress
+        const currentStat = game.stats[achievement.stat] || 0;
+        const progress = Math.min(currentStat, achievement.requirement);
+        const progressPercent = Math.floor((progress / achievement.requirement) * 100);
+
+        // Format unlocked date if available
+        let unlockedDateStr = '';
+        if (achievement.unlocked && achievement.unlockedAt) {
+            const date = new Date(achievement.unlockedAt);
+            unlockedDateStr = `<div class="achievement-unlocked-date">Unlocked: ${date.toLocaleDateString()}</div>`;
+        }
+
+        // Build reward text
+        let rewardText = `${achievement.reward} ⭐`;
+        if (achievement.rewardBucks > 0) {
+            rewardText += ` + ${achievement.rewardBucks} 💎`;
+        }
+
+        card.innerHTML = `
+            <div class="achievement-icon">${achievement.unlocked ? '🏆' : '🔒'}</div>
+            <div class="achievement-name">${achievement.name}</div>
+            <div class="achievement-description">${achievement.description}</div>
+            <div class="achievement-progress">${progress} / ${achievement.requirement} (${progressPercent}%)</div>
+            <div class="achievement-reward">${rewardText}</div>
+            ${unlockedDateStr}
+        `;
+
+        listEl.appendChild(card);
+    });
+
+    // Show modal
+    document.getElementById('achievements-modal').classList.add('active');
+}
+
+/**
+ * Close achievements modal
+ */
+function closeAchievementsModal() {
+    document.getElementById('achievements-modal').classList.remove('active');
+}
+
+/**
+ * Open reader collection modal
+ */
+function openCollectionModal() {
+    const collection = game.readerCollection;
+    const regularReaders = game.readerTypes;
+    const vipReaders = game.vipTypes;
+
+    const totalReaders = regularReaders.length + vipReaders.length;
+    const discoveredCount = Object.keys(collection).length;
+
+    // Update summary counts
+    document.getElementById('collection-seen-count').textContent = discoveredCount;
+    document.getElementById('collection-total-count').textContent = totalReaders;
+
+    // Render regular readers
+    const regularListEl = document.getElementById('regular-readers-list');
+    regularListEl.innerHTML = '';
+    regularReaders.forEach(readerType => {
+        const collectionData = collection[readerType.id];
+        const discovered = !!collectionData;
+
+        const card = document.createElement('div');
+        card.className = `reader-card ${discovered ? 'discovered' : 'undiscovered'}`;
+
+        let statsHtml = '';
+        if (discovered) {
+            const firstSeen = new Date(collectionData.firstSeen).toLocaleDateString();
+            statsHtml = `
+                <div class="reader-stats">
+                    <div class="reader-stat-line">Served: ${collectionData.count} times</div>
+                    <div class="reader-stat-line">First seen: ${firstSeen}</div>
+                </div>
+            `;
+        } else {
+            statsHtml = `
+                <div class="reader-stats">
+                    <div class="reader-stat-line">Not yet discovered</div>
+                </div>
+            `;
+        }
+
+        card.innerHTML = `
+            <div class="reader-emoji">${discovered ? readerType.emoji : '❓'}</div>
+            <div class="reader-name">${discovered ? readerType.name : '???'}</div>
+            <div class="reader-type-label">Regular Reader</div>
+            ${statsHtml}
+        `;
+
+        regularListEl.appendChild(card);
+    });
+
+    // Render VIP readers
+    const vipListEl = document.getElementById('vip-readers-list');
+    vipListEl.innerHTML = '';
+    vipReaders.forEach(vipType => {
+        const collectionData = collection[vipType.id];
+        const discovered = !!collectionData;
+
+        const card = document.createElement('div');
+        card.className = `reader-card ${discovered ? 'discovered' : 'undiscovered'}`;
+
+        let statsHtml = '';
+        if (discovered) {
+            const firstSeen = new Date(collectionData.firstSeen).toLocaleDateString();
+            statsHtml = `
+                <div class="reader-stats">
+                    <div class="reader-stat-line">Served: ${collectionData.count} times</div>
+                    <div class="reader-stat-line">First seen: ${firstSeen}</div>
+                </div>
+                <div class="reader-ability">${vipType.description}</div>
+            `;
+        } else {
+            statsHtml = `
+                <div class="reader-stats">
+                    <div class="reader-stat-line">Not yet discovered</div>
+                </div>
+            `;
+        }
+
+        card.innerHTML = `
+            <div class="reader-emoji">${discovered ? vipType.emoji : '❓'}</div>
+            <div class="reader-name">${discovered ? vipType.name : '???'}</div>
+            <div class="reader-type-label">VIP Reader</div>
+            ${statsHtml}
+        `;
+
+        vipListEl.appendChild(card);
+    });
+
+    // Show modal
+    document.getElementById('collection-modal').classList.add('active');
+}
+
+/**
+ * Close collection modal
+ */
+function closeCollectionModal() {
+    document.getElementById('collection-modal').classList.remove('active');
 }
 
 /**

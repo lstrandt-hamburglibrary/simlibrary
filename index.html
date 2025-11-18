@@ -31,6 +31,8 @@
                         <span class="stat-label">level</span>
                     </div>
                     <button class="stats-btn" id="open-stats-btn" title="View Statistics">📈</button>
+                    <button class="stats-btn" id="open-achievements-btn" title="View Achievements">🏆</button>
+                    <button class="stats-btn" id="open-collection-btn" title="Reader Collection">📖</button>
                 </div>
             </header>
 
@@ -172,6 +174,53 @@
                             <div class="stat-icon-large">⏱️</div>
                             <div class="stat-number" id="stat-time">0h 0m</div>
                             <div class="stat-name">Time Played</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievements Modal -->
+        <div id="achievements-modal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3>🏆 Achievements</h3>
+                    <button class="close-btn" id="close-achievements-modal">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="achievements-summary">
+                        <span id="achievements-unlocked-count">0</span> / <span id="achievements-total-count">0</span> Unlocked
+                    </div>
+                    <div id="achievements-list" class="achievements-list">
+                        <!-- Achievement cards will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reader Collection Modal -->
+        <div id="collection-modal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3>📖 Reader Collection</h3>
+                    <button class="close-btn" id="close-collection-modal">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="collection-summary">
+                        <span id="collection-seen-count">0</span> / <span id="collection-total-count">0</span> Discovered
+                    </div>
+                    <div class="collection-sections">
+                        <div class="collection-section">
+                            <h4>Regular Readers</h4>
+                            <div id="regular-readers-list" class="collection-list">
+                                <!-- Regular reader cards will be inserted here -->
+                            </div>
+                        </div>
+                        <div class="collection-section">
+                            <h4>VIP Readers</h4>
+                            <div id="vip-readers-list" class="collection-list">
+                                <!-- VIP reader cards will be inserted here -->
+                            </div>
                         </div>
                     </div>
                 </div>
