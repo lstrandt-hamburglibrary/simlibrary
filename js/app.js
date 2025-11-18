@@ -43,7 +43,7 @@ function init() {
         updateTowerScreen();
         renderMissionBanner();
 
-        // If viewing floor details, refresh it
+        // If viewing floor detail modal, refresh it
         if (currentFloorId) {
             const floor = game.getFloor(currentFloorId);
             if (floor) {
@@ -64,9 +64,16 @@ function setupEventListeners() {
         openBuildModal();
     });
 
-    // Detail screen back button
-    document.getElementById('detail-back-btn').addEventListener('click', () => {
-        closeDetailScreen();
+    // Detail modal close button
+    document.getElementById('close-detail-modal').addEventListener('click', () => {
+        closeDetailModal();
+    });
+
+    // Close detail modal when clicking outside
+    document.getElementById('detail-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'detail-modal') {
+            closeDetailModal();
+        }
     });
 
     // Build modal close button
@@ -229,7 +236,7 @@ function handleRushConstruction(floorId) {
 }
 
 /**
- * Open floor detail screen
+ * Open floor detail modal
  */
 function openFloorDetail(floorId) {
     const floor = game.getFloor(floorId);
@@ -238,7 +245,6 @@ function openFloorDetail(floorId) {
     currentFloorId = floorId;
 
     // Update header
-    document.getElementById('detail-title').textContent = floor.name;
     document.getElementById('detail-emoji').textContent = floor.emoji;
     document.getElementById('detail-name').textContent = floor.name;
 
@@ -262,8 +268,8 @@ function openFloorDetail(floorId) {
     // Render active readers
     renderActiveReaders(floor);
 
-    // Show detail screen
-    document.getElementById('detail-screen').classList.add('active');
+    // Show detail modal
+    document.getElementById('detail-modal').classList.add('active');
 }
 
 /**
@@ -524,10 +530,10 @@ function renderActiveReaders(floor) {
 }
 
 /**
- * Close floor detail screen
+ * Close floor detail modal
  */
-function closeDetailScreen() {
-    document.getElementById('detail-screen').classList.remove('active');
+function closeDetailModal() {
+    document.getElementById('detail-modal').classList.remove('active');
     currentFloorId = null;
 }
 

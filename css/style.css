@@ -987,6 +987,30 @@ body {
 }
 
 /* ===================================
+   Floor Detail Modal
+   =================================== */
+
+.floor-hero-inline {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.floor-emoji-large {
+    font-size: 48px;
+}
+
+.floor-hero-inline h3 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.floor-hero-inline .floor-status {
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* ===================================
    VIP Reader Styling
    =================================== */
 

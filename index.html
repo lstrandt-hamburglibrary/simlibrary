@@ -57,41 +57,43 @@
             </div>
         </div>
 
-        <!-- Floor Detail Screen -->
-        <div id="detail-screen" class="screen">
-            <header class="screen-header">
-                <button class="back-btn" id="detail-back-btn">← Back</button>
-                <h2 id="detail-title">Floor Details</h2>
-            </header>
-
-            <div class="detail-container">
-                <div class="floor-hero">
-                    <div class="floor-emoji" id="detail-emoji">📖</div>
-                    <h3 id="detail-name">Floor Name</h3>
-                    <div class="floor-status" id="detail-status">Ready</div>
-                </div>
-
-                <!-- Staff Section -->
-                <div class="staff-section">
-                    <h4>Staff</h4>
-                    <div id="staff-slots" class="staff-slots">
-                        <!-- Staff slots will be inserted here -->
+        <!-- Floor Detail Modal -->
+        <div id="detail-modal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <div class="floor-hero-inline">
+                        <span class="floor-emoji-large" id="detail-emoji">📖</span>
+                        <div>
+                            <h3 id="detail-name">Floor Name</h3>
+                            <div class="floor-status" id="detail-status">Ready</div>
+                        </div>
                     </div>
+                    <button class="close-btn" id="close-detail-modal">✕</button>
                 </div>
 
-                <!-- Book Stock Section -->
-                <div class="book-stock-section">
-                    <h4>Book Categories</h4>
-                    <div id="book-categories" class="book-categories">
-                        <!-- Book category cards will be inserted here -->
+                <div class="modal-body">
+                    <!-- Staff Section -->
+                    <div class="staff-section">
+                        <h4>Staff</h4>
+                        <div id="staff-slots" class="staff-slots">
+                            <!-- Staff slots will be inserted here -->
+                        </div>
                     </div>
-                </div>
 
-                <!-- Active Readers Section -->
-                <div class="readers-section">
-                    <h4>Active Readers</h4>
-                    <div id="active-readers" class="active-readers">
-                        <p class="empty-state">No readers currently visiting</p>
+                    <!-- Book Stock Section -->
+                    <div class="book-stock-section">
+                        <h4>Book Categories</h4>
+                        <div id="book-categories" class="book-categories">
+                            <!-- Book category cards will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Active Readers Section -->
+                    <div class="readers-section">
+                        <h4>Active Readers</h4>
+                        <div id="active-readers" class="active-readers">
+                            <p class="empty-state">No readers currently visiting</p>
+                        </div>
                     </div>
                 </div>
             </div>
