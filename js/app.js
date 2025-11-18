@@ -36,12 +36,28 @@ function init() {
         delete game._offlineEarningsMessage;
     }
 
+    // Check daily login bonus
+    const dailyReward = game.checkDailyLogin();
+    if (dailyReward) {
+        const bucksText = dailyReward.bucks > 0 ? ` + ${dailyReward.bucks} 💎` : '';
+        alert(`🎁 Day ${dailyReward.day} Login Bonus!\n+${dailyReward.stars} ⭐${bucksText}`);
+    }
+
     // Start game tick (every 1 second for responsive feel)
     setInterval(() => {
         game.tick();
         updateGlobalStats();
         updateTowerScreen();
         renderMissionBanner();
+
+        // Check for new achievements
+        if (game._newAchievements && game._newAchievements.length > 0) {
+            game._newAchievements.forEach(achievement => {
+                const bucksText = achievement.rewardBucks > 0 ? ` + ${achievement.rewardBucks} 💎` : '';
+                alert(`🏆 Achievement Unlocked!\n${achievement.name}\n${achievement.description}\n\nReward: ${achievement.reward} ⭐${bucksText}`);
+            });
+            delete game._newAchievements;
+        }
 
         // If viewing floor detail modal, refresh it
         if (currentFloorId) {
