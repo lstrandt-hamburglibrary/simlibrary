@@ -275,6 +275,9 @@ function openFloorDetail(floorId) {
         statusEl.className = 'floor-status ready';
     }
 
+    // Render upgrade section
+    renderUpgradeSection(floor);
+
     // Render staff slots
     renderStaffSlots(floor);
 
@@ -301,6 +304,9 @@ function updateFloorDetail(floor) {
         statusEl.textContent = '✅ Ready';
     }
 
+    // Update upgrade section
+    renderUpgradeSection(floor);
+
     // Update staff slots
     renderStaffSlots(floor);
 
@@ -309,6 +315,75 @@ function updateFloorDetail(floor) {
 
     // Update active readers
     renderActiveReaders(floor);
+}
+
+/**
+ * Render upgrade section for a floor
+ */
+function renderUpgradeSection(floor) {
+    const container = document.getElementById('upgrade-section');
+
+    if (floor.status !== 'ready') {
+        container.innerHTML = '';
+        return;
+    }
+
+    const level = floor.upgradeLevel || 1;
+    const upgradeCosts = [0, 200, 500];
+    const nextCost = upgradeCosts[level];
+
+    if (level >= 3) {
+        container.innerHTML = `
+            <div class="upgrade-maxed">
+                ⭐⭐⭐ Floor at Maximum Level! ⭐⭐⭐
+            </div>
+        `;
+        return;
+    }
+
+    const multipliers = [1.0, 1.25, 1.5];
+    const nextMultiplier = multipliers[level];
+    const bonusText = level === 1 ? '+25%' : '+50%';
+
+    container.innerHTML = `
+        <div class="upgrade-info">
+            <div class="current-level">
+                <strong>Floor Level:</strong> ${level} / 3
+                ${level === 2 ? ' <span class="upgrade-badge">+25% Boosted</span>' : ''}
+                ${level === 3 ? ' <span class="upgrade-badge gold">+50% Boosted MAX</span>' : ''}
+            </div>
+            ${level < 3 ? `
+                <button class="upgrade-floor-btn" data-floor-id="${floor.id}">
+                    ⬆️ Upgrade to Level ${level + 1} (${nextCost} ⭐)
+                    <br><span class="upgrade-bonus">${bonusText} capacity & earning rate</span>
+                </button>
+            ` : ''}
+        </div>
+    `;
+
+    // Add event listener for upgrade button
+    const upgradeBtn = container.querySelector('.upgrade-floor-btn');
+    if (upgradeBtn) {
+        upgradeBtn.addEventListener('click', () => {
+            handleUpgradeFloor(floor.id);
+        });
+    }
+}
+
+/**
+ * Handle floor upgrade
+ */
+function handleUpgradeFloor(floorId) {
+    const result = game.upgradeFloor(floorId);
+    if (result.success) {
+        const floor = game.getFloor(floorId);
+        renderUpgradeSection(floor);
+        renderBookCategories(floor);
+        updateGlobalStats();
+        alert(`🎉 Floor upgraded to Level ${result.level}!`);
+    } else {
+        alert(result.error || 'Cannot upgrade floor');
+    }
 }
 
 /**
