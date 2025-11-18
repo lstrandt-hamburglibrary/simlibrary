@@ -415,6 +415,64 @@ class GameState {
                     { name: 'Yard Games', stockCost: 85, stockTime: 88, stockAmount: 100, earningRate: 17 },
                     { name: 'DVDs', stockCost: 100, stockTime: 110, stockAmount: 100, earningRate: 20 }
                 ]
+            },
+
+            // === CAFE & FOOD SERVICE ===
+            {
+                id: 'coffee_shop',
+                name: 'Coffee Shop',
+                emoji: '☕',
+                color: 'brown',
+                description: 'Fuel for readers and researchers',
+                buildCost: 250,
+                buildTime: 45,
+                bookCategories: [
+                    { name: 'Drip Coffee', stockCost: 18, stockTime: 22, stockAmount: 100, earningRate: 4 },
+                    { name: 'Espresso Drinks', stockCost: 28, stockTime: 35, stockAmount: 100, earningRate: 6 },
+                    { name: 'Cold Brew', stockCost: 40, stockTime: 50, stockAmount: 100, earningRate: 8 }
+                ]
+            },
+            {
+                id: 'bakery',
+                name: 'Bakery Corner',
+                emoji: '🥐',
+                color: 'peach',
+                description: 'Fresh pastries and treats',
+                buildCost: 300,
+                buildTime: 50,
+                bookCategories: [
+                    { name: 'Danish Pastries', stockCost: 20, stockTime: 25, stockAmount: 100, earningRate: 4 },
+                    { name: 'Muffins & Scones', stockCost: 32, stockTime: 38, stockAmount: 100, earningRate: 6 },
+                    { name: 'Specialty Cakes', stockCost: 48, stockTime: 55, stockAmount: 100, earningRate: 9 }
+                ]
+            },
+            {
+                id: 'hot_drinks_cafe',
+                name: 'Hot Drinks Café',
+                emoji: '🍫',
+                color: 'brown',
+                description: 'Cozy drinks for cozy reading',
+                buildCost: 280,
+                buildTime: 48,
+                bookCategories: [
+                    { name: 'Hot Chocolate', stockCost: 22, stockTime: 28, stockAmount: 100, earningRate: 5 },
+                    { name: 'Tea Selection', stockCost: 16, stockTime: 20, stockAmount: 100, earningRate: 3 },
+                    { name: 'Specialty Lattes', stockCost: 35, stockTime: 42, stockAmount: 100, earningRate: 7 }
+                ]
+            },
+            {
+                id: 'snack_bar',
+                name: 'Snack Bar',
+                emoji: '🍿',
+                color: 'mint',
+                description: 'Quick bites for busy patrons',
+                buildCost: 220,
+                buildTime: 40,
+                bookCategories: [
+                    { name: 'Popcorn & Chips', stockCost: 12, stockTime: 15, stockAmount: 100, earningRate: 3 },
+                    { name: 'Cookies & Bars', stockCost: 25, stockTime: 30, stockAmount: 100, earningRate: 5 },
+                    { name: 'Fruit & Yogurt', stockCost: 38, stockTime: 45, stockAmount: 100, earningRate: 8 }
+                ]
             }
         ];
 
@@ -916,8 +974,8 @@ class GameState {
             this.towerBucks += 1;
         }
 
-        // Spawn new readers periodically (5% chance each tick = slower earning)
-        if (Math.random() < 0.05) {
+        // Spawn new readers periodically (20% chance each tick = more active gameplay)
+        if (Math.random() < 0.20) {
             this.spawnReader();
         }
 

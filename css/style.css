@@ -26,6 +26,7 @@
     --gradient-mint: linear-gradient(135deg, #C8E6C9 0%, #A5D6A7 100%);
     --gradient-lavender: linear-gradient(135deg, #E1BEE7 0%, #CE93D8 100%);
     --gradient-sky: linear-gradient(135deg, #B3E5FC 0%, #81D4FA 100%);
+    --gradient-brown: linear-gradient(135deg, #D7CCC8 0%, #BCAAA4 100%);
     --gradient-pink: linear-gradient(135deg, #F8BBD0 0%, #F48FB1 100%);
     --gradient-purple: linear-gradient(135deg, #D1C4E9 0%, #B39DDB 100%);
     --gradient-red: linear-gradient(135deg, #FFCDD2 0%, #EF9A9A 100%);
