@@ -101,6 +101,41 @@ class GameState {
             gameStartTime: Date.now()
         };
 
+        // Achievements system
+        this.achievements = [
+            { id: 'first_floor', name: 'Getting Started', description: 'Build your first floor', requirement: 1, stat: 'totalFloorsBuilt', reward: 50, rewardBucks: 0, unlocked: false },
+            { id: 'tower_rising', name: 'Tower Rising', description: 'Build 5 floors', requirement: 5, stat: 'totalFloorsBuilt', reward: 100, rewardBucks: 1, unlocked: false },
+            { id: 'tower_tycoon', name: 'Tower Tycoon', description: 'Build 10 floors', requirement: 10, stat: 'totalFloorsBuilt', reward: 250, rewardBucks: 2, unlocked: false },
+
+            { id: 'bookworm', name: 'Bookworm', description: 'Serve 100 readers', requirement: 100, stat: 'totalReadersServed', reward: 100, rewardBucks: 1, unlocked: false },
+            { id: 'library_legend', name: 'Library Legend', description: 'Serve 500 readers', requirement: 500, stat: 'totalReadersServed', reward: 300, rewardBucks: 2, unlocked: false },
+
+            { id: 'vip_treatment', name: 'VIP Treatment', description: 'Serve 10 VIP readers', requirement: 10, stat: 'totalVIPsServed', reward: 150, rewardBucks: 1, unlocked: false },
+            { id: 'celebrity_status', name: 'Celebrity Status', description: 'Serve 50 VIP readers', requirement: 50, stat: 'totalVIPsServed', reward: 400, rewardBucks: 3, unlocked: false },
+
+            { id: 'mission_starter', name: 'Mission Starter', description: 'Complete 5 missions', requirement: 5, stat: 'totalMissionsCompleted', reward: 75, rewardBucks: 1, unlocked: false },
+            { id: 'mission_master', name: 'Mission Master', description: 'Complete 25 missions', requirement: 25, stat: 'totalMissionsCompleted', reward: 200, rewardBucks: 2, unlocked: false },
+
+            { id: 'hiring_spree', name: 'Hiring Spree', description: 'Hire 10 staff members', requirement: 10, stat: 'totalStaffHired', reward: 100, rewardBucks: 1, unlocked: false },
+            { id: 'well_staffed', name: 'Well Staffed', description: 'Hire 25 staff members', requirement: 25, stat: 'totalStaffHired', reward: 250, rewardBucks: 2, unlocked: false },
+
+            { id: 'page_turner', name: 'Page Turner', description: 'Check out 500 books', requirement: 500, stat: 'totalBooksCheckedOut', reward: 150, rewardBucks: 1, unlocked: false },
+            { id: 'library_hero', name: 'Library Hero', description: 'Check out 2000 books', requirement: 2000, stat: 'totalBooksCheckedOut', reward: 500, rewardBucks: 3, unlocked: false }
+        ];
+
+        // Daily login tracking
+        this.dailyLogin = {
+            lastLoginDate: null,
+            streak: 0,
+            lastRewardClaimed: null
+        };
+
+        // Reader collection (Pokédex style)
+        this.readerCollection = {
+            // Maps reader type ID to {count: number, firstSeen: timestamp, lastSeen: timestamp}
+            // e.g., 'kid': {count: 15, firstSeen: ..., lastSeen: ...}
+        };
+
         // Staff types catalog
         this.staffTypes = [
             {
@@ -524,6 +559,7 @@ class GameState {
             status: 'building', // building, ready
             buildStartTime: Date.now(),
             buildEndTime: Date.now() + (floorType.buildTime * 1000),
+            upgradeLevel: 1, // Floor upgrade level (1, 2, or 3)
             staff: [], // Hired staff (max 3, unlocks book categories)
             bookStock: floorType.bookCategories.map(cat => ({
                 name: cat.name,
@@ -884,6 +920,154 @@ class GameState {
     }
 
     /**
+     * Check and unlock achievements
+     */
+    checkAchievements() {
+        const newlyUnlocked = [];
+
+        this.achievements.forEach(achievement => {
+            if (!achievement.unlocked && this.stats[achievement.stat] >= achievement.requirement) {
+                achievement.unlocked = true;
+                achievement.unlockedAt = Date.now();
+
+                // Award rewards
+                this.stars += achievement.reward;
+                this.stats.totalStarsEarned += achievement.reward;
+
+                if (achievement.rewardBucks > 0) {
+                    this.towerBucks += achievement.rewardBucks;
+                    this.stats.totalTowerBucksEarned += achievement.rewardBucks;
+                }
+
+                newlyUnlocked.push(achievement);
+            }
+        });
+
+        return newlyUnlocked;
+    }
+
+    /**
+     * Upgrade a floor (increases capacity and earning rate)
+     */
+    upgradeFloor(floorId) {
+        const floor = this.getFloor(floorId);
+        if (!floor || floor.status !== 'ready') {
+            return { success: false, error: 'Floor not ready' };
+        }
+
+        if (floor.upgradeLevel >= 3) {
+            return { success: false, error: 'Floor already at max level' };
+        }
+
+        // Calculate upgrade cost (exponential: 200, 500, 1000...)
+        const upgradeCosts = [0, 200, 500];
+        const cost = upgradeCosts[floor.upgradeLevel];
+
+        if (this.stars < cost) {
+            return { success: false, error: 'Not enough stars' };
+        }
+
+        // Deduct cost
+        this.stars -= cost;
+
+        // Upgrade floor
+        floor.upgradeLevel += 1;
+
+        // Increase stock capacity and earning rate
+        const multiplier = floor.upgradeLevel === 2 ? 1.25 : 1.5; // +25% or +50%
+        floor.bookStock.forEach(cat => {
+            const floorType = this.floorTypes.find(t => t.id === floor.typeId);
+            const originalCat = floorType.bookCategories.find(c => c.name === cat.name);
+
+            cat.maxStock = Math.floor(originalCat.stockAmount * multiplier);
+            cat.earningRate = Math.floor(originalCat.earningRate * multiplier);
+        });
+
+        this.save();
+        return { success: true, level: floor.upgradeLevel };
+    }
+
+    /**
+     * Check daily login and award streak bonus
+     */
+    checkDailyLogin() {
+        const today = new Date().toDateString();
+
+        if (this.dailyLogin.lastLoginDate === today) {
+            // Already logged in today
+            return null;
+        }
+
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toDateString();
+
+        // Check streak
+        if (this.dailyLogin.lastLoginDate === yesterdayStr) {
+            // Consecutive day - increment streak
+            this.dailyLogin.streak += 1;
+        } else if (this.dailyLogin.lastLoginDate !== null) {
+            // Streak broken - reset
+            this.dailyLogin.streak = 1;
+        } else {
+            // First login ever
+            this.dailyLogin.streak = 1;
+        }
+
+        this.dailyLogin.lastLoginDate = today;
+
+        // Calculate reward based on streak
+        const dayRewards = {
+            1: { stars: 50, bucks: 0 },
+            2: { stars: 75, bucks: 0 },
+            3: { stars: 100, bucks: 0 },
+            4: { stars: 125, bucks: 0 },
+            5: { stars: 150, bucks: 0 },
+            6: { stars: 200, bucks: 1 },
+            7: { stars: 300, bucks: 2 }
+        };
+
+        const day = Math.min(this.dailyLogin.streak, 7);
+        const reward = dayRewards[day];
+
+        // Award reward
+        this.stars += reward.stars;
+        this.stats.totalStarsEarned += reward.stars;
+
+        if (reward.bucks > 0) {
+            this.towerBucks += reward.bucks;
+            this.stats.totalTowerBucksEarned += reward.bucks;
+        }
+
+        this.dailyLogin.lastRewardClaimed = Date.now();
+        this.save();
+
+        return {
+            day: this.dailyLogin.streak,
+            stars: reward.stars,
+            bucks: reward.bucks
+        };
+    }
+
+    /**
+     * Track reader in collection
+     */
+    trackReaderInCollection(reader) {
+        const typeId = reader.type === 'vip' ? reader.vipType : reader.type;
+
+        if (!this.readerCollection[typeId]) {
+            this.readerCollection[typeId] = {
+                count: 0,
+                firstSeen: Date.now(),
+                lastSeen: Date.now()
+            };
+        }
+
+        this.readerCollection[typeId].count += 1;
+        this.readerCollection[typeId].lastSeen = Date.now();
+    }
+
+    /**
      * Game tick - called frequently to update timers, readers, etc.
      */
     tick() {
@@ -931,6 +1115,9 @@ class GameState {
                     this.stats.totalBooksCheckedOut += 1;
                     this.stats.totalStarsEarned += reader.earningAmount;
                     this.stats.totalReadersServed += 1;
+
+                    // Track reader in collection
+                    this.trackReaderInCollection(reader);
 
                     // Handle VIP abilities
                     if (reader.type === 'vip') {
@@ -1005,6 +1192,13 @@ class GameState {
         // Update time played stat (every tick = 1 second)
         this.stats.timePlayed += 1;
 
+        // Check for newly unlocked achievements
+        const newAchievements = this.checkAchievements();
+        if (newAchievements.length > 0) {
+            // Store for UI notification
+            this._newAchievements = newAchievements;
+        }
+
         this.save();
     }
 
@@ -1032,6 +1226,9 @@ class GameState {
             missionHistory: this.missionHistory,
             nextMissionTime: this.nextMissionTime,
             stats: this.stats,
+            achievements: this.achievements,
+            dailyLogin: this.dailyLogin,
+            readerCollection: this.readerCollection,
             timestamp: Date.now()
         };
         localStorage.setItem('simlibrary_save_v2', JSON.stringify(saveData));
@@ -1074,10 +1271,33 @@ class GameState {
                     };
                 }
 
-                // Migrate old floors to have staff array if missing
+                // Load achievements (merge with defaults to add new ones)
+                if (data.achievements) {
+                    this.achievements.forEach((defaultAchievement, index) => {
+                        const savedAchievement = data.achievements.find(a => a.id === defaultAchievement.id);
+                        if (savedAchievement) {
+                            this.achievements[index] = { ...defaultAchievement, ...savedAchievement };
+                        }
+                    });
+                }
+
+                // Load daily login
+                if (data.dailyLogin) {
+                    this.dailyLogin = data.dailyLogin;
+                }
+
+                // Load reader collection
+                if (data.readerCollection) {
+                    this.readerCollection = data.readerCollection;
+                }
+
+                // Migrate old floors to have staff array and upgradeLevel if missing
                 this.floors.forEach(floor => {
                     if (!floor.staff) {
                         floor.staff = [];
+                    }
+                    if (!floor.upgradeLevel) {
+                        floor.upgradeLevel = 1;
                     }
                 });
 
