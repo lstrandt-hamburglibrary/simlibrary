@@ -340,30 +340,39 @@ class TowerRenderer {
         const clickX = e.clientX - rect.left;
         const clickY = e.clientY - rect.top;
 
-        // Check floor clicks
-        this.game.floors.forEach(floor => {
-            if (floor._renderBounds) {
-                const b = floor._renderBounds;
-                if (clickX >= b.x && clickX <= b.x + b.width &&
-                    clickY >= b.y && clickY <= b.y + b.height) {
-                    // Floor clicked - trigger detail view
-                    if (window.openFloorDetail) {
-                        window.openFloorDetail(floor.id);
-                    }
-                }
-            }
-        });
+        console.log('Canvas clicked at:', clickX, clickY);
 
-        // Check build slot click
+        // Check build slot click first (top of tower)
         if (this._buildSlotBounds) {
             const b = this._buildSlotBounds;
             if (clickX >= b.x && clickX <= b.x + b.width &&
                 clickY >= b.y && clickY <= b.y + b.height) {
+                console.log('Build slot clicked!');
                 if (window.openBuildModal) {
                     window.openBuildModal();
                 }
+                return; // Don't check floors if build slot was clicked
             }
         }
+
+        // Check floor clicks (check all floors)
+        const floors = [...this.game.floors].reverse(); // Top to bottom for click priority
+        for (const floor of floors) {
+            if (floor._renderBounds) {
+                const b = floor._renderBounds;
+                if (clickX >= b.x && clickX <= b.x + b.width &&
+                    clickY >= b.y && clickY <= b.y + b.height) {
+                    console.log('Floor clicked:', floor.name);
+                    // Floor clicked - trigger detail view
+                    if (window.openFloorDetail) {
+                        window.openFloorDetail(floor.id);
+                    }
+                    return; // Stop checking after first match
+                }
+            }
+        }
+
+        console.log('No floor clicked');
     }
 
     /**
