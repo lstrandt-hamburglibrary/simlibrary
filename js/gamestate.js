@@ -1,50 +1,90 @@
 /**
- * SimLibrary - Game State Management
- * Handles all game data, floors, furniture, and persistence
+ * SimLibrary - Tiny Tower Style Game State
+ * Build floors, stock books, serve readers, earn stars
  */
 
 class GameState {
     constructor() {
+        // Player resources
+        this.stars = 1000; // Starting currency
+        this.towerBucks = 5; // Premium currency (for rushing)
+        this.level = 1;
+        this.xp = 0;
+        this.xpToNextLevel = 100;
+
+        // Floors and construction
         this.floors = [];
-        this.stars = 500; // Starting currency
-        this.currentFloorId = null;
+        this.maxFloors = 20; // Can expand later
+        this.nextFloorSlot = 1; // Next available slot to build
 
-        // Available decor items
-        this.decorCatalog = [
-            { id: 'chair', emoji: '🪑', label: 'Tiny Chair', cost: 50, readers: 1 },
-            { id: 'beanbag', emoji: '🛋️', label: 'Beanbag', cost: 75, readers: 2 },
-            { id: 'rug', emoji: '🧺', label: 'Cozy Rug', cost: 100, readers: 3 },
-            { id: 'poster', emoji: '🖼️', label: 'Poster', cost: 60, readers: 1 },
-            { id: 'plant', emoji: '🪴', label: 'Plant', cost: 80, readers: 2 },
-            { id: 'lamp', emoji: '💡', label: 'Lamp', cost: 90, readers: 2 },
-            { id: 'bookshelf', emoji: '📚', label: 'Bookshelf', cost: 150, readers: 5 }
-        ];
+        // Characters
+        this.readers = []; // Active readers visiting
+        this.librarians = []; // Hired librarians
 
-        // Floor themes/templates
-        this.floorThemes = [
+        // Missions/orders
+        this.currentMission = null;
+
+        // Floor type catalog
+        this.floorTypes = [
             {
+                id: 'picture_books',
                 name: 'Picture Book Meadow',
                 emoji: '📖',
                 color: 'peach',
-                description: 'A cozy space for young readers'
+                description: 'Cozy stories for little readers',
+                buildCost: 100,
+                buildTime: 30, // seconds
+                unlockLevel: 1,
+                bookCategories: [
+                    { name: 'Board Books', stockCost: 10, stockTime: 15, stockAmount: 100, earningRate: 2 },
+                    { name: 'Picture Stories', stockCost: 20, stockTime: 30, stockAmount: 100, earningRate: 4 },
+                    { name: 'Early Readers', stockCost: 40, stockTime: 60, stockAmount: 100, earningRate: 8 }
+                ]
             },
             {
+                id: 'animals_nature',
                 name: 'Animals & Nature Wing',
                 emoji: '🦋',
                 color: 'mint',
-                description: 'Discover the natural world'
+                description: 'Discover the natural world',
+                buildCost: 200,
+                buildTime: 60,
+                unlockLevel: 2,
+                bookCategories: [
+                    { name: 'Animal Tales', stockCost: 15, stockTime: 20, stockAmount: 100, earningRate: 3 },
+                    { name: 'Nature Guides', stockCost: 25, stockTime: 40, stockAmount: 100, earningRate: 5 },
+                    { name: 'Wildlife Encyclopedia', stockCost: 50, stockTime: 80, stockAmount: 100, earningRate: 10 }
+                ]
             },
             {
+                id: 'space_science',
                 name: 'Space & Science Zone',
                 emoji: '🚀',
                 color: 'sky',
-                description: 'Explore the cosmos and beyond'
+                description: 'Explore the cosmos and beyond',
+                buildCost: 400,
+                buildTime: 120,
+                unlockLevel: 3,
+                bookCategories: [
+                    { name: 'Space Adventures', stockCost: 20, stockTime: 25, stockAmount: 100, earningRate: 4 },
+                    { name: 'Science Experiments', stockCost: 30, stockTime: 50, stockAmount: 100, earningRate: 6 },
+                    { name: 'Astronomy Books', stockCost: 60, stockTime: 100, stockAmount: 100, earningRate: 12 }
+                ]
             },
             {
+                id: 'mystery',
                 name: 'Mystery Corner',
                 emoji: '🔍',
                 color: 'lavender',
-                description: 'Unravel thrilling mysteries'
+                description: 'Unravel thrilling mysteries',
+                buildCost: 800,
+                buildTime: 180,
+                unlockLevel: 4,
+                bookCategories: [
+                    { name: 'Easy Mysteries', stockCost: 25, stockTime: 30, stockAmount: 100, earningRate: 5 },
+                    { name: 'Detective Stories', stockCost: 40, stockTime: 60, stockAmount: 100, earningRate: 8 },
+                    { name: 'Advanced Thrillers', stockCost: 80, stockTime: 120, stockAmount: 100, earningRate: 15 }
+                ]
             }
         ];
 
@@ -52,205 +92,290 @@ class GameState {
     }
 
     /**
-     * Generate a unique ID
+     * Generate unique ID
      */
     generateId() {
-        return 'floor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        return Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
 
     /**
-     * Create a new floor
+     * Get available floor types for current level
      */
-    addFloor(themeName = null) {
-        const theme = themeName
-            ? this.floorThemes.find(t => t.name === themeName)
-            : this.floorThemes[this.floors.length % this.floorThemes.length];
+    getAvailableFloorTypes() {
+        return this.floorTypes.filter(type => type.unlockLevel <= this.level);
+    }
 
+    /**
+     * Start building a new floor
+     */
+    buildFloor(floorTypeId) {
+        const floorType = this.floorTypes.find(t => t.id === floorTypeId);
+        if (!floorType) return { success: false, error: 'Invalid floor type' };
+
+        // Check unlock level
+        if (floorType.unlockLevel > this.level) {
+            return { success: false, error: `Unlock at level ${floorType.unlockLevel}` };
+        }
+
+        // Check cost
+        if (this.stars < floorType.buildCost) {
+            return { success: false, error: 'Not enough stars' };
+        }
+
+        // Check if we have space
+        if (this.floors.length >= this.maxFloors) {
+            return { success: false, error: 'Tower is full' };
+        }
+
+        // Deduct cost
+        this.stars -= floorType.buildCost;
+
+        // Create new floor
         const newFloor = {
             id: this.generateId(),
-            name: theme.name,
-            emoji: theme.emoji,
-            color: theme.color,
-            level: 1,
-            xp: 0,
-            xpToNextLevel: 100,
-            readersPerMinute: 0,
-            furniture: [] // Array of placed furniture items
+            floorNumber: this.nextFloorSlot++,
+            typeId: floorTypeId,
+            name: floorType.name,
+            emoji: floorType.emoji,
+            color: floorType.color,
+            status: 'building', // building, ready
+            buildStartTime: Date.now(),
+            buildEndTime: Date.now() + (floorType.buildTime * 1000),
+            bookStock: floorType.bookCategories.map(cat => ({
+                name: cat.name,
+                currentStock: 0,
+                maxStock: cat.stockAmount,
+                stockCost: cat.stockCost,
+                stockTime: cat.stockTime,
+                earningRate: cat.earningRate,
+                restocking: false,
+                restockStartTime: null,
+                restockEndTime: null
+            })),
+            librarianId: null // No librarian assigned yet
         };
 
         this.floors.push(newFloor);
         this.save();
-        return newFloor;
+        return { success: true, floor: newFloor };
+    }
+
+    /**
+     * Rush floor construction with tower bucks
+     */
+    rushConstruction(floorId) {
+        const floor = this.getFloor(floorId);
+        if (!floor || floor.status !== 'building') return false;
+
+        if (this.towerBucks < 1) return false;
+
+        this.towerBucks -= 1;
+        floor.status = 'ready';
+        floor.buildEndTime = Date.now();
+        this.save();
+        return true;
+    }
+
+    /**
+     * Start restocking a book category
+     */
+    restockBooks(floorId, categoryIndex) {
+        const floor = this.getFloor(floorId);
+        if (!floor || floor.status !== 'ready') return { success: false, error: 'Floor not ready' };
+
+        const category = floor.bookStock[categoryIndex];
+        if (!category) return { success: false, error: 'Invalid category' };
+
+        if (category.restocking) return { success: false, error: 'Already restocking' };
+
+        if (category.currentStock >= category.maxStock) {
+            return { success: false, error: 'Already full' };
+        }
+
+        if (this.stars < category.stockCost) {
+            return { success: false, error: 'Not enough stars' };
+        }
+
+        // Deduct cost
+        this.stars -= category.stockCost;
+
+        // Start restocking
+        category.restocking = true;
+        category.restockStartTime = Date.now();
+        category.restockEndTime = Date.now() + (category.stockTime * 1000);
+
+        this.save();
+        return { success: true };
+    }
+
+    /**
+     * Rush restocking with tower bucks
+     */
+    rushRestocking(floorId, categoryIndex) {
+        const floor = this.getFloor(floorId);
+        if (!floor) return false;
+
+        const category = floor.bookStock[categoryIndex];
+        if (!category || !category.restocking) return false;
+
+        if (this.towerBucks < 1) return false;
+
+        this.towerBucks -= 1;
+        category.currentStock = category.maxStock;
+        category.restocking = false;
+        category.restockEndTime = Date.now();
+        this.save();
+        return true;
     }
 
     /**
      * Get floor by ID
      */
     getFloor(id) {
-        return this.floors.find(floor => floor.id === id);
+        return this.floors.find(f => f.id === id);
     }
 
     /**
-     * Upgrade a floor (increase level)
+     * Spawn a reader to visit a random ready floor
      */
-    upgradeFloor(floorId) {
-        const floor = this.getFloor(floorId);
-        if (!floor) return false;
+    spawnReader() {
+        const readyFloors = this.floors.filter(f => f.status === 'ready');
+        if (readyFloors.length === 0) return null;
 
-        const upgradeCost = this.getUpgradeCost(floor.level);
+        // Pick a random floor
+        const floor = readyFloors[Math.floor(Math.random() * readyFloors.length)];
 
-        if (this.stars >= upgradeCost) {
-            this.stars -= upgradeCost;
-            floor.level += 1;
-            floor.xp = 0;
-            floor.xpToNextLevel = Math.floor(floor.xpToNextLevel * 1.5);
-            this.save();
-            return true;
-        }
+        // Pick a category with stock
+        const stockedCategories = floor.bookStock
+            .map((cat, idx) => ({ cat, idx }))
+            .filter(({ cat }) => cat.currentStock > 0);
 
-        return false;
-    }
+        if (stockedCategories.length === 0) return null;
 
-    /**
-     * Calculate upgrade cost based on level
-     */
-    getUpgradeCost(level) {
-        return Math.floor(100 * Math.pow(1.5, level - 1));
-    }
+        const { cat, idx } = stockedCategories[Math.floor(Math.random() * stockedCategories.length)];
 
-    /**
-     * Add furniture to a floor
-     */
-    addFurniture(floorId, decorId, x, y) {
-        const floor = this.getFloor(floorId);
-        const decor = this.decorCatalog.find(d => d.id === decorId);
-
-        if (!floor || !decor) return false;
-
-        const furnitureItem = {
-            id: 'furniture_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-            decorId: decorId,
-            x: x,
-            y: y
+        // Create reader
+        const reader = {
+            id: this.generateId(),
+            floorId: floor.id,
+            categoryIndex: idx,
+            emoji: ['👤', '👧', '👦', '🧑', '👩', '👨'][Math.floor(Math.random() * 6)],
+            checkoutTime: Date.now() + 3000, // 3 seconds to checkout
+            earningAmount: cat.earningRate
         };
 
-        floor.furniture.push(furnitureItem);
-        this.recalculateFloorStats(floorId);
-        this.save();
-        return furnitureItem;
+        this.readers.push(reader);
+        return reader;
     }
 
     /**
-     * Move furniture on a floor
-     */
-    moveFurniture(floorId, furnitureId, newX, newY) {
-        const floor = this.getFloor(floorId);
-        if (!floor) return false;
-
-        const furniture = floor.furniture.find(f => f.id === furnitureId);
-        if (furniture) {
-            furniture.x = newX;
-            furniture.y = newY;
-            this.save();
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Remove furniture from a floor
-     */
-    removeFurniture(floorId, furnitureId) {
-        const floor = this.getFloor(floorId);
-        if (!floor) return false;
-
-        floor.furniture = floor.furniture.filter(f => f.id !== furnitureId);
-        this.recalculateFloorStats(floorId);
-        this.save();
-        return true;
-    }
-
-    /**
-     * Recalculate floor stats based on furniture
-     */
-    recalculateFloorStats(floorId) {
-        const floor = this.getFloor(floorId);
-        if (!floor) return;
-
-        let totalReaders = 0;
-
-        floor.furniture.forEach(furniture => {
-            const decor = this.decorCatalog.find(d => d.id === furniture.decorId);
-            if (decor) {
-                totalReaders += decor.readers;
-            }
-        });
-
-        // Apply level multiplier
-        floor.readersPerMinute = Math.floor(totalReaders * floor.level);
-    }
-
-    /**
-     * Get total readers per minute across all floors
-     */
-    getTotalReaders() {
-        return this.floors.reduce((total, floor) => total + floor.readersPerMinute, 0);
-    }
-
-    /**
-     * Game tick - called every second/minute
-     * Awards XP and stars based on readers
+     * Game tick - called frequently to update timers, readers, etc.
      */
     tick() {
-        const totalReaders = this.getTotalReaders();
+        const now = Date.now();
 
-        // Award stars (currency)
-        this.stars += Math.floor(totalReaders / 10); // 10 readers = 1 star per tick
-
-        // Award XP to floors
+        // Check floor construction completion
         this.floors.forEach(floor => {
-            if (floor.readersPerMinute > 0) {
-                floor.xp += floor.readersPerMinute;
-
-                // Level up if reached threshold
-                while (floor.xp >= floor.xpToNextLevel) {
-                    floor.xp -= floor.xpToNextLevel;
-                    floor.level += 1;
-                    floor.xpToNextLevel = Math.floor(floor.xpToNextLevel * 1.5);
-                    this.recalculateFloorStats(floor.id);
-                }
+            if (floor.status === 'building' && now >= floor.buildEndTime) {
+                floor.status = 'ready';
             }
         });
+
+        // Check restocking completion
+        this.floors.forEach(floor => {
+            floor.bookStock.forEach(category => {
+                if (category.restocking && now >= category.restockEndTime) {
+                    category.currentStock = category.maxStock;
+                    category.restocking = false;
+                }
+            });
+        });
+
+        // Process readers checking out
+        this.readers = this.readers.filter(reader => {
+            if (now >= reader.checkoutTime) {
+                const floor = this.getFloor(reader.floorId);
+                if (floor && floor.bookStock[reader.categoryIndex]) {
+                    // Consume a book
+                    floor.bookStock[reader.categoryIndex].currentStock -= 1;
+
+                    // Earn stars
+                    this.stars += reader.earningAmount;
+
+                    // Earn XP
+                    this.xp += reader.earningAmount;
+                }
+
+                // Remove reader (they checked out)
+                return false;
+            }
+            return true;
+        });
+
+        // Level up check
+        while (this.xp >= this.xpToNextLevel) {
+            this.xp -= this.xpToNextLevel;
+            this.level += 1;
+            this.xpToNextLevel = Math.floor(this.xpToNextLevel * 1.5);
+            // Award tower bucks on level up
+            this.towerBucks += 1;
+        }
+
+        // Spawn new readers periodically (25% chance each tick)
+        if (Math.random() < 0.25) {
+            this.spawnReader();
+        }
 
         this.save();
     }
 
     /**
-     * Save game state to LocalStorage
+     * Get total number of ready floors
+     */
+    getReadyFloorCount() {
+        return this.floors.filter(f => f.status === 'ready').length;
+    }
+
+    /**
+     * Save to localStorage
      */
     save() {
         const saveData = {
-            floors: this.floors,
             stars: this.stars,
+            towerBucks: this.towerBucks,
+            level: this.level,
+            xp: this.xp,
+            xpToNextLevel: this.xpToNextLevel,
+            floors: this.floors,
+            nextFloorSlot: this.nextFloorSlot,
+            readers: this.readers,
             timestamp: Date.now()
         };
-        localStorage.setItem('simlibrary_save', JSON.stringify(saveData));
+        localStorage.setItem('simlibrary_save_v2', JSON.stringify(saveData));
     }
 
     /**
-     * Load game state from LocalStorage
+     * Load from localStorage
      */
     load() {
-        const saved = localStorage.getItem('simlibrary_save');
+        const saved = localStorage.getItem('simlibrary_save_v2');
 
         if (saved) {
             try {
                 const data = JSON.parse(saved);
+                this.stars = data.stars || 1000;
+                this.towerBucks = data.towerBucks || 5;
+                this.level = data.level || 1;
+                this.xp = data.xp || 0;
+                this.xpToNextLevel = data.xpToNextLevel || 100;
                 this.floors = data.floors || [];
-                this.stars = data.stars || 500;
+                this.nextFloorSlot = data.nextFloorSlot || 1;
+                this.readers = data.readers || [];
+
+                // Process any time-based events that happened while offline
+                this.processOfflineProgress(data.timestamp);
             } catch (e) {
-                console.error('Failed to load save data:', e);
+                console.error('Failed to load save:', e);
                 this.initializeNewGame();
             }
         } else {
@@ -259,28 +384,66 @@ class GameState {
     }
 
     /**
-     * Initialize a new game with starter floor
+     * Process offline progress
      */
-    initializeNewGame() {
-        this.floors = [];
-        this.stars = 500;
+    processOfflineProgress(lastSaveTime) {
+        if (!lastSaveTime) return;
 
-        // Add starter floor
-        this.addFloor('Picture Book Meadow');
+        const now = Date.now();
+        const offlineTime = now - lastSaveTime;
 
-        // Add some starter furniture
-        const starterFloor = this.floors[0];
-        this.addFurniture(starterFloor.id, 'chair', 100, 100);
-        this.addFurniture(starterFloor.id, 'bookshelf', 200, 150);
+        if (offlineTime < 1000) return; // Less than 1 second offline
+
+        // Complete any constructions that finished while offline
+        this.floors.forEach(floor => {
+            if (floor.status === 'building' && floor.buildEndTime <= now) {
+                floor.status = 'ready';
+            }
+        });
+
+        // Complete any restocking that finished while offline
+        this.floors.forEach(floor => {
+            floor.bookStock.forEach(category => {
+                if (category.restocking && category.restockEndTime <= now) {
+                    category.currentStock = category.maxStock;
+                    category.restocking = false;
+                }
+            });
+        });
+
+        // Clear any stale readers
+        this.readers = [];
 
         this.save();
     }
 
     /**
-     * Reset game (for debugging)
+     * Initialize new game
+     */
+    initializeNewGame() {
+        this.stars = 1000;
+        this.towerBucks = 5;
+        this.level = 1;
+        this.xp = 0;
+        this.xpToNextLevel = 100;
+        this.floors = [];
+        this.nextFloorSlot = 1;
+        this.readers = [];
+
+        // Build starter floor
+        this.buildFloor('picture_books');
+        // Instantly complete it for tutorial
+        this.floors[0].status = 'ready';
+        this.floors[0].buildEndTime = Date.now();
+
+        this.save();
+    }
+
+    /**
+     * Reset game (debug)
      */
     reset() {
-        localStorage.removeItem('simlibrary_save');
+        localStorage.removeItem('simlibrary_save_v2');
         this.initializeNewGame();
     }
 }

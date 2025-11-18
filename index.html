@@ -16,14 +16,19 @@
                 <h1>📚 SimLibrary</h1>
                 <div class="stats-bar">
                     <div class="stat">
-                        <span class="stat-icon">👥</span>
-                        <span class="stat-value" id="total-readers">0</span>
-                        <span class="stat-label">readers/min</span>
-                    </div>
-                    <div class="stat">
                         <span class="stat-icon">⭐</span>
                         <span class="stat-value" id="total-stars">0</span>
                         <span class="stat-label">stars</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-icon">💎</span>
+                        <span class="stat-value" id="total-bucks">0</span>
+                        <span class="stat-label">bucks</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-icon">📊</span>
+                        <span class="stat-value" id="player-level">1</span>
+                        <span class="stat-label">level</span>
                     </div>
                 </div>
             </header>
@@ -35,7 +40,7 @@
 
                 <button class="add-floor-btn" id="add-floor-btn">
                     <span class="btn-icon">➕</span>
-                    Add New Floor
+                    Build New Floor
                 </button>
             </div>
         </div>
@@ -51,58 +56,37 @@
                 <div class="floor-hero">
                     <div class="floor-emoji" id="detail-emoji">📖</div>
                     <h3 id="detail-name">Floor Name</h3>
-                    <div class="floor-level">Level <span id="detail-level">1</span></div>
+                    <div class="floor-status" id="detail-status">Ready</div>
                 </div>
 
-                <div class="stats-section">
-                    <div class="stat-card">
-                        <div class="stat-card-label">Readers per Minute</div>
-                        <div class="stat-card-value" id="detail-readers">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-label">Progress to Next Level</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="detail-progress" style="width: 0%"></div>
-                        </div>
-                        <div class="progress-text"><span id="detail-progress-text">0/100</span> XP</div>
+                <!-- Book Stock Section -->
+                <div class="book-stock-section">
+                    <h4>Book Categories</h4>
+                    <div id="book-categories" class="book-categories">
+                        <!-- Book category cards will be inserted here -->
                     </div>
                 </div>
 
-                <div class="action-buttons">
-                    <button class="btn-primary btn-large" id="upgrade-floor-btn">
-                        <span class="btn-icon">⬆️</span>
-                        Upgrade Floor
-                        <span class="btn-cost" id="upgrade-cost">100 ⭐</span>
-                    </button>
-                    <button class="btn-secondary btn-large" id="edit-floor-btn">
-                        <span class="btn-icon">🎨</span>
-                        Edit Floor
-                    </button>
+                <!-- Active Readers Section -->
+                <div class="readers-section">
+                    <h4>Active Readers</h4>
+                    <div id="active-readers" class="active-readers">
+                        <p class="empty-state">No readers currently visiting</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Floor Editor Screen -->
-        <div id="editor-screen" class="screen">
-            <header class="screen-header">
-                <button class="back-btn" id="editor-back-btn">← Back</button>
-                <h2 id="editor-title">Edit Floor</h2>
-                <button class="done-btn" id="editor-done-btn">Done</button>
-            </header>
-
-            <div class="editor-container">
-                <div class="room-editor" id="room-editor">
-                    <!-- Grid background with placed items -->
-                    <div class="grid-background"></div>
-                    <div id="placed-items" class="placed-items">
-                        <!-- Placed furniture items will appear here -->
-                    </div>
+        <!-- Build Floor Modal -->
+        <div id="build-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Build New Floor</h3>
+                    <button class="close-btn" id="close-build-modal">✕</button>
                 </div>
-
-                <div class="decor-bar">
-                    <h4>Decor Items</h4>
-                    <div class="decor-items" id="decor-items">
-                        <!-- Decor items will be dynamically added -->
+                <div class="modal-body">
+                    <div id="floor-types-list" class="floor-types-list">
+                        <!-- Floor type options will be inserted here -->
                     </div>
                 </div>
             </div>

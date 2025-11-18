@@ -1,19 +1,11 @@
 /**
- * SimLibrary - Main Application Logic
+ * SimLibrary - Tiny Tower Style UI
  * Handles UI rendering and user interactions
  */
 
 // Game state instance
 let game;
-
-// Screen management
-const screens = {
-    tower: document.getElementById('tower-screen'),
-    detail: document.getElementById('detail-screen'),
-    editor: document.getElementById('editor-screen')
-};
-
-let currentScreen = 'tower';
+let currentFloorId = null;
 
 /**
  * Initialize the application
@@ -26,88 +18,60 @@ function init() {
 
     // Render initial state
     renderTowerScreen();
+    updateGlobalStats();
 
-    // Start game tick (every 5 seconds for demo purposes)
+    // Start game tick (every 1 second for responsive feel)
     setInterval(() => {
         game.tick();
-        updateStats();
+        updateGlobalStats();
+        updateTowerScreen();
 
-        // If on detail screen, update progress bar
-        if (currentScreen === 'detail' && game.currentFloorId) {
-            renderDetailScreen(game.currentFloorId);
+        // If viewing floor details, refresh it
+        if (currentFloorId) {
+            const floor = game.getFloor(currentFloorId);
+            if (floor) {
+                updateFloorDetail(floor);
+            }
         }
-    }, 5000);
+    }, 1000);
 
-    console.log('SimLibrary initialized!');
+    console.log('SimLibrary v2 (Tiny Tower style) initialized!');
 }
 
 /**
  * Set up all event listeners
  */
 function setupEventListeners() {
-    // Add Floor button
+    // Add Floor button - opens build modal
     document.getElementById('add-floor-btn').addEventListener('click', () => {
-        const newFloor = game.addFloor();
-        renderTowerScreen();
+        openBuildModal();
     });
 
     // Detail screen back button
     document.getElementById('detail-back-btn').addEventListener('click', () => {
-        switchScreen('tower');
+        closeDetailScreen();
     });
 
-    // Upgrade floor button
-    document.getElementById('upgrade-floor-btn').addEventListener('click', () => {
-        if (game.currentFloorId) {
-            const success = game.upgradeFloor(game.currentFloorId);
-            if (success) {
-                renderDetailScreen(game.currentFloorId);
-                updateStats();
-            } else {
-                alert('Not enough stars to upgrade!');
-            }
+    // Build modal close button
+    document.getElementById('close-build-modal').addEventListener('click', () => {
+        closeBuildModal();
+    });
+
+    // Close modal when clicking outside
+    document.getElementById('build-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'build-modal') {
+            closeBuildModal();
         }
-    });
-
-    // Edit floor button
-    document.getElementById('edit-floor-btn').addEventListener('click', () => {
-        if (game.currentFloorId) {
-            switchScreen('editor');
-            renderEditorScreen(game.currentFloorId);
-        }
-    });
-
-    // Editor screen buttons
-    document.getElementById('editor-back-btn').addEventListener('click', () => {
-        switchScreen('detail');
-    });
-
-    document.getElementById('editor-done-btn').addEventListener('click', () => {
-        switchScreen('detail');
-        renderDetailScreen(game.currentFloorId);
     });
 }
 
 /**
- * Switch between screens
+ * Update global stats display (stars, bucks, level)
  */
-function switchScreen(screenName) {
-    // Hide all screens
-    Object.values(screens).forEach(screen => {
-        screen.classList.remove('active');
-    });
-
-    // Show target screen
-    screens[screenName].classList.add('active');
-    currentScreen = screenName;
-}
-
-/**
- * Update global stats display
- */
-function updateStats() {
-    document.getElementById('total-readers').textContent = game.getTotalReaders();
-    document.getElementById('total-stars').textContent = game.stars;
+function updateGlobalStats() {
+    document.getElementById('total-stars').textContent = Math.floor(game.stars);
+    document.getElementById('total-bucks').textContent = game.towerBucks;
+    document.getElementById('player-level').textContent = game.level;
 }
 
 /**
@@ -118,17 +82,29 @@ function renderTowerScreen() {
     floorsList.innerHTML = '';
 
     if (game.floors.length === 0) {
-        floorsList.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--text-secondary);">No floors yet! Click "Add New Floor" to start building.</p>';
+        floorsList.innerHTML = `
+            <div class="empty-tower">
+                <p>🏗️ Your library tower is empty!</p>
+                <p>Click "Build New Floor" to get started.</p>
+            </div>
+        `;
         return;
     }
 
-    // Render floors in reverse order (top floor first)
+    // Render floors in reverse order (top to bottom)
     [...game.floors].reverse().forEach(floor => {
         const floorCard = createFloorCard(floor);
         floorsList.appendChild(floorCard);
     });
+}
 
-    updateStats();
+/**
+ * Update tower screen (refresh timers, stock levels)
+ */
+function updateTowerScreen() {
+    game.floors.forEach(floor => {
+        updateFloorCard(floor);
+    });
 }
 
 /**
@@ -137,194 +113,352 @@ function renderTowerScreen() {
 function createFloorCard(floor) {
     const card = document.createElement('div');
     card.className = `floor-card ${floor.color}`;
-    card.innerHTML = `
-        <div class="floor-icon">${floor.emoji}</div>
-        <div class="floor-info">
-            <div class="floor-name">${floor.name}</div>
-            <div class="floor-meta">
-                <span class="floor-level">Level ${floor.level}</span>
-                <span class="floor-readers">👥 ${floor.readersPerMinute}/min</span>
-            </div>
-        </div>
-    `;
+    card.id = `floor-card-${floor.id}`;
 
-    card.addEventListener('click', () => {
-        game.currentFloorId = floor.id;
-        renderDetailScreen(floor.id);
-        switchScreen('detail');
+    if (floor.status === 'building') {
+        const remaining = Math.max(0, Math.ceil((floor.buildEndTime - Date.now()) / 1000));
+        card.innerHTML = `
+            <div class="floor-icon">${floor.emoji}</div>
+            <div class="floor-info">
+                <div class="floor-name">${floor.name}</div>
+                <div class="floor-status">🏗️ Building... ${remaining}s</div>
+            </div>
+            <button class="rush-btn" data-floor-id="${floor.id}" data-action="rush-build">
+                💎 Rush
+            </button>
+        `;
+    } else {
+        const totalStock = floor.bookStock.reduce((sum, cat) => sum + cat.currentStock, 0);
+        const maxStock = floor.bookStock.reduce((sum, cat) => sum + cat.maxStock, 0);
+        const stockPercent = maxStock > 0 ? Math.floor((totalStock / maxStock) * 100) : 0;
+
+        card.innerHTML = `
+            <div class="floor-icon">${floor.emoji}</div>
+            <div class="floor-info">
+                <div class="floor-name">${floor.name}</div>
+                <div class="floor-meta">
+                    <span class="floor-stock">📚 ${totalStock}/${maxStock} (${stockPercent}%)</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // Click to view details
+    card.addEventListener('click', (e) => {
+        // Don't open if clicking rush button
+        if (e.target.classList.contains('rush-btn') || e.target.closest('.rush-btn')) {
+            const floorId = e.target.dataset.floorId || e.target.closest('.rush-btn').dataset.floorId;
+            handleRushConstruction(floorId);
+            return;
+        }
+        openFloorDetail(floor.id);
     });
 
     return card;
 }
 
 /**
- * Render the Floor Detail Screen
+ * Update an existing floor card
  */
-function renderDetailScreen(floorId) {
+function updateFloorCard(floor) {
+    const card = document.getElementById(`floor-card-${floor.id}`);
+    if (!card) return;
+
+    if (floor.status === 'building') {
+        const remaining = Math.max(0, Math.ceil((floor.buildEndTime - Date.now()) / 1000));
+        const statusEl = card.querySelector('.floor-status');
+        if (statusEl) {
+            statusEl.textContent = `🏗️ Building... ${remaining}s`;
+        }
+    } else {
+        const totalStock = floor.bookStock.reduce((sum, cat) => sum + cat.currentStock, 0);
+        const maxStock = floor.bookStock.reduce((sum, cat) => sum + cat.maxStock, 0);
+        const stockPercent = maxStock > 0 ? Math.floor((totalStock / maxStock) * 100) : 0;
+
+        const stockEl = card.querySelector('.floor-stock');
+        if (stockEl) {
+            stockEl.textContent = `📚 ${totalStock}/${maxStock} (${stockPercent}%)`;
+        }
+    }
+}
+
+/**
+ * Handle rushing construction
+ */
+function handleRushConstruction(floorId) {
+    const success = game.rushConstruction(floorId);
+    if (success) {
+        renderTowerScreen();
+    } else {
+        alert('Not enough Tower Bucks!');
+    }
+}
+
+/**
+ * Open floor detail screen
+ */
+function openFloorDetail(floorId) {
     const floor = game.getFloor(floorId);
     if (!floor) return;
+
+    currentFloorId = floorId;
 
     // Update header
     document.getElementById('detail-title').textContent = floor.name;
-
-    // Update hero section
     document.getElementById('detail-emoji').textContent = floor.emoji;
     document.getElementById('detail-name').textContent = floor.name;
-    document.getElementById('detail-level').textContent = floor.level;
 
-    // Update stats
-    document.getElementById('detail-readers').textContent = floor.readersPerMinute;
+    // Update status
+    const statusEl = document.getElementById('detail-status');
+    if (floor.status === 'building') {
+        const remaining = Math.max(0, Math.ceil((floor.buildEndTime - Date.now()) / 1000));
+        statusEl.textContent = `🏗️ Building... ${remaining}s`;
+        statusEl.className = 'floor-status building';
+    } else {
+        statusEl.textContent = '✅ Ready';
+        statusEl.className = 'floor-status ready';
+    }
 
-    // Update progress bar
-    const progressPercent = (floor.xp / floor.xpToNextLevel) * 100;
-    document.getElementById('detail-progress').style.width = progressPercent + '%';
-    document.getElementById('detail-progress-text').textContent = `${floor.xp}/${floor.xpToNextLevel}`;
+    // Render book categories
+    renderBookCategories(floor);
 
-    // Update upgrade button
-    const upgradeCost = game.getUpgradeCost(floor.level);
-    document.getElementById('upgrade-cost').textContent = `${upgradeCost} ⭐`;
+    // Render active readers
+    renderActiveReaders(floor);
+
+    // Show detail screen
+    document.getElementById('detail-screen').classList.add('active');
 }
 
 /**
- * Render the Floor Editor Screen
+ * Update floor detail (called on tick)
  */
-function renderEditorScreen(floorId) {
-    const floor = game.getFloor(floorId);
-    if (!floor) return;
+function updateFloorDetail(floor) {
+    // Update status
+    const statusEl = document.getElementById('detail-status');
+    if (floor.status === 'building') {
+        const remaining = Math.max(0, Math.ceil((floor.buildEndTime - Date.now()) / 1000));
+        statusEl.textContent = `🏗️ Building... ${remaining}s`;
+    } else {
+        statusEl.textContent = '✅ Ready';
+    }
 
-    // Update header
-    document.getElementById('editor-title').textContent = `Edit ${floor.name}`;
+    // Update book categories
+    renderBookCategories(floor);
 
-    // Render placed furniture
-    renderPlacedFurniture(floor);
-
-    // Render decor catalog
-    renderDecorCatalog();
+    // Update active readers
+    renderActiveReaders(floor);
 }
 
 /**
- * Render placed furniture items in the editor
+ * Render book categories for a floor
  */
-function renderPlacedFurniture(floor) {
-    const container = document.getElementById('placed-items');
+function renderBookCategories(floor) {
+    const container = document.getElementById('book-categories');
     container.innerHTML = '';
 
-    floor.furniture.forEach(furniture => {
-        const decor = game.decorCatalog.find(d => d.id === furniture.decorId);
-        if (!decor) return;
+    if (floor.status !== 'ready') {
+        container.innerHTML = '<p class="empty-state">Floor is under construction</p>';
+        return;
+    }
 
-        const item = document.createElement('div');
-        item.className = 'furniture-item';
-        item.style.left = furniture.x + 'px';
-        item.style.top = furniture.y + 'px';
-        item.innerHTML = `
-            <div class="furniture-icon">${decor.emoji}</div>
-            <div class="furniture-label">${decor.label}</div>
+    floor.bookStock.forEach((category, index) => {
+        const card = document.createElement('div');
+        card.className = 'book-category-card';
+
+        const stockPercent = (category.currentStock / category.maxStock) * 100;
+        const isRestocking = category.restocking;
+        const isFull = category.currentStock >= category.maxStock;
+
+        let statusText = '';
+        let actionButton = '';
+
+        if (isRestocking) {
+            const remaining = Math.max(0, Math.ceil((category.restockEndTime - Date.now()) / 1000));
+            statusText = `📦 Restocking... ${remaining}s`;
+            actionButton = `<button class="rush-restock-btn" data-floor-id="${floor.id}" data-category="${index}">💎 Rush</button>`;
+        } else if (isFull) {
+            statusText = '✅ Fully Stocked';
+            actionButton = `<button class="restock-btn disabled" disabled>Restock (${category.stockCost} ⭐)</button>`;
+        } else {
+            statusText = `${category.currentStock}/${category.maxStock} books`;
+            actionButton = `<button class="restock-btn" data-floor-id="${floor.id}" data-category="${index}">Restock (${category.stockCost} ⭐)</button>`;
+        }
+
+        card.innerHTML = `
+            <div class="category-header">
+                <h5>${category.name}</h5>
+                <span class="earning-rate">+${category.earningRate} ⭐/book</span>
+            </div>
+            <div class="stock-bar">
+                <div class="stock-fill" style="width: ${stockPercent}%"></div>
+            </div>
+            <div class="category-status">${statusText}</div>
+            <div class="category-actions">
+                ${actionButton}
+            </div>
         `;
 
-        // Make draggable
-        makeDraggable(item, furniture.id, floor.id);
+        container.appendChild(card);
+    });
 
-        // Double-click to remove
-        item.addEventListener('dblclick', () => {
-            if (confirm(`Remove ${decor.label}?`)) {
-                game.removeFurniture(floor.id, furniture.id);
-                renderPlacedFurniture(floor);
-            }
+    // Add event listeners for restock buttons
+    container.querySelectorAll('.restock-btn:not(.disabled)').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const floorId = btn.dataset.floorId;
+            const categoryIndex = parseInt(btn.dataset.category);
+            handleRestock(floorId, categoryIndex);
         });
+    });
 
-        container.appendChild(item);
+    // Add event listeners for rush buttons
+    container.querySelectorAll('.rush-restock-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const floorId = btn.dataset.floorId;
+            const categoryIndex = parseInt(btn.dataset.category);
+            handleRushRestock(floorId, categoryIndex);
+        });
     });
 }
 
 /**
- * Render the decor catalog in the editor
+ * Handle restocking a category
  */
-function renderDecorCatalog() {
-    const container = document.getElementById('decor-items');
+function handleRestock(floorId, categoryIndex) {
+    const result = game.restockBooks(floorId, categoryIndex);
+    if (result.success) {
+        const floor = game.getFloor(floorId);
+        renderBookCategories(floor);
+        updateGlobalStats();
+    } else {
+        alert(result.error || 'Cannot restock');
+    }
+}
+
+/**
+ * Handle rushing restock
+ */
+function handleRushRestock(floorId, categoryIndex) {
+    const success = game.rushRestocking(floorId, categoryIndex);
+    if (success) {
+        const floor = game.getFloor(floorId);
+        renderBookCategories(floor);
+        updateGlobalStats();
+    } else {
+        alert('Not enough Tower Bucks!');
+    }
+}
+
+/**
+ * Render active readers for a floor
+ */
+function renderActiveReaders(floor) {
+    const container = document.getElementById('active-readers');
+    const readersOnFloor = game.readers.filter(r => r.floorId === floor.id);
+
+    if (readersOnFloor.length === 0) {
+        container.innerHTML = '<p class="empty-state">No readers currently visiting</p>';
+        return;
+    }
+
     container.innerHTML = '';
-
-    game.decorCatalog.forEach(decor => {
-        const item = document.createElement('div');
-        item.className = 'decor-item';
-        item.innerHTML = `
-            <div class="decor-item-icon">${decor.emoji}</div>
-            <div class="decor-item-label">${decor.label}</div>
+    readersOnFloor.forEach(reader => {
+        const remaining = Math.max(0, Math.ceil((reader.checkoutTime - Date.now()) / 1000));
+        const readerEl = document.createElement('div');
+        readerEl.className = 'reader-item';
+        readerEl.innerHTML = `
+            <span class="reader-emoji">${reader.emoji}</span>
+            <span class="reader-info">Checking out... ${remaining}s</span>
+            <span class="reader-earning">+${reader.earningAmount} ⭐</span>
         `;
-
-        item.addEventListener('click', () => {
-            // Add furniture to center of room
-            const floor = game.getFloor(game.currentFloorId);
-            if (floor) {
-                game.addFurniture(floor.id, decor.id, 150, 150);
-                renderPlacedFurniture(floor);
-            }
-        });
-
-        container.appendChild(item);
+        container.appendChild(readerEl);
     });
 }
 
 /**
- * Make an element draggable
+ * Close floor detail screen
  */
-function makeDraggable(element, furnitureId, floorId) {
-    let isDragging = false;
-    let currentX;
-    let currentY;
-    let initialX;
-    let initialY;
+function closeDetailScreen() {
+    document.getElementById('detail-screen').classList.remove('active');
+    currentFloorId = null;
+}
 
-    element.addEventListener('mousedown', dragStart);
-    element.addEventListener('touchstart', dragStart);
+/**
+ * Open build floor modal
+ */
+function openBuildModal() {
+    const availableTypes = game.getAvailableFloorTypes();
+    const container = document.getElementById('floor-types-list');
+    container.innerHTML = '';
 
-    function dragStart(e) {
-        if (e.type === 'touchstart') {
-            initialX = e.touches[0].clientX - element.offsetLeft;
-            initialY = e.touches[0].clientY - element.offsetTop;
-        } else {
-            initialX = e.clientX - element.offsetLeft;
-            initialY = e.clientY - element.offsetTop;
+    if (availableTypes.length === 0) {
+        container.innerHTML = '<p class="empty-state">No floor types available</p>';
+        document.getElementById('build-modal').classList.add('active');
+        return;
+    }
+
+    availableTypes.forEach(floorType => {
+        const canAfford = game.stars >= floorType.buildCost;
+        const card = document.createElement('div');
+        card.className = `floor-type-card ${floorType.color} ${!canAfford ? 'disabled' : ''}`;
+        card.innerHTML = `
+            <div class="floor-type-icon">${floorType.emoji}</div>
+            <div class="floor-type-info">
+                <h5>${floorType.name}</h5>
+                <p>${floorType.description}</p>
+                <div class="floor-type-meta">
+                    <span>💰 ${floorType.buildCost} stars</span>
+                    <span>⏱️ ${floorType.buildTime}s</span>
+                </div>
+            </div>
+        `;
+
+        if (canAfford) {
+            card.addEventListener('click', () => {
+                handleBuildFloor(floorType.id);
+            });
         }
 
-        isDragging = true;
+        container.appendChild(card);
+    });
 
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', dragEnd);
-        document.addEventListener('touchmove', drag);
-        document.addEventListener('touchend', dragEnd);
-    }
-
-    function drag(e) {
-        if (!isDragging) return;
-
-        e.preventDefault();
-
-        if (e.type === 'touchmove') {
-            currentX = e.touches[0].clientX - initialX;
-            currentY = e.touches[0].clientY - initialY;
-        } else {
-            currentX = e.clientX - initialX;
-            currentY = e.clientY - initialY;
+    // Show all floor types (including locked ones)
+    game.floorTypes.forEach(floorType => {
+        if (floorType.unlockLevel > game.level) {
+            const card = document.createElement('div');
+            card.className = `floor-type-card ${floorType.color} locked`;
+            card.innerHTML = `
+                <div class="floor-type-icon">${floorType.emoji}</div>
+                <div class="floor-type-info">
+                    <h5>${floorType.name}</h5>
+                    <p>🔒 Unlock at level ${floorType.unlockLevel}</p>
+                </div>
+            `;
+            container.appendChild(card);
         }
+    });
 
-        element.style.left = currentX + 'px';
-        element.style.top = currentY + 'px';
+    document.getElementById('build-modal').classList.add('active');
+}
+
+/**
+ * Handle building a floor
+ */
+function handleBuildFloor(floorTypeId) {
+    const result = game.buildFloor(floorTypeId);
+    if (result.success) {
+        closeBuildModal();
+        renderTowerScreen();
+        updateGlobalStats();
+    } else {
+        alert(result.error || 'Cannot build floor');
     }
+}
 
-    function dragEnd() {
-        if (!isDragging) return;
-
-        isDragging = false;
-
-        // Save new position
-        game.moveFurniture(floorId, furnitureId, currentX, currentY);
-
-        document.removeEventListener('mousemove', drag);
-        document.removeEventListener('mouseup', dragEnd);
-        document.removeEventListener('touchmove', drag);
-        document.removeEventListener('touchend', dragEnd);
-    }
+/**
+ * Close build modal
+ */
+function closeBuildModal() {
+    document.getElementById('build-modal').classList.remove('active');
 }
 
 // Initialize app when DOM is ready
