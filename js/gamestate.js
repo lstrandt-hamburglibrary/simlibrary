@@ -724,17 +724,38 @@ class GameState {
         const readyFloors = this.floors.filter(f => f.status === 'ready');
         if (readyFloors.length === 0) return null;
 
-        // Pick a random floor
-        const floor = readyFloors[Math.floor(Math.random() * readyFloors.length)];
+        let floor, cat, idx;
 
-        // Pick a category with stock
-        const stockedCategories = floor.bookStock
-            .map((cat, idx) => ({ cat, idx }))
-            .filter(({ cat }) => cat.currentStock > 0);
+        // If there's an active mission, 60% chance to spawn reader for that mission
+        if (this.currentMission && this.currentMission.status === 'active' && Math.random() < 0.60) {
+            const missionFloor = this.getFloor(this.currentMission.floorId);
+            if (missionFloor && missionFloor.status === 'ready') {
+                const missionCategory = missionFloor.bookStock[this.currentMission.categoryIndex];
+                if (missionCategory && missionCategory.currentStock > 0) {
+                    // Send reader to mission floor/category
+                    floor = missionFloor;
+                    cat = missionCategory;
+                    idx = this.currentMission.categoryIndex;
+                }
+            }
+        }
 
-        if (stockedCategories.length === 0) return null;
+        // If not directed to mission (or mission not available), pick randomly
+        if (!floor) {
+            // Pick a random floor
+            floor = readyFloors[Math.floor(Math.random() * readyFloors.length)];
 
-        const { cat, idx } = stockedCategories[Math.floor(Math.random() * stockedCategories.length)];
+            // Pick a category with stock
+            const stockedCategories = floor.bookStock
+                .map((cat, idx) => ({ cat, idx }))
+                .filter(({ cat }) => cat.currentStock > 0);
+
+            if (stockedCategories.length === 0) return null;
+
+            const selected = stockedCategories[Math.floor(Math.random() * stockedCategories.length)];
+            cat = selected.cat;
+            idx = selected.idx;
+        }
 
         // Generate random name
         const firstName = this.readerNames.first[Math.floor(Math.random() * this.readerNames.first.length)];
@@ -774,14 +795,14 @@ class GameState {
             if (!readerType) readerType = this.readerTypes[0];
         }
 
-        // Calculate checkout time and earnings based on VIP ability
-        let checkoutTime = Date.now() + 3000; // Default 3 seconds
-        let earningAmount = cat.earningRate;
+        // Calculate browse time and earnings based on VIP ability
+        let browseTime = 8000; // Default 8 seconds of browsing AFTER arrival
+        let earningAmount = Math.max(1, Math.floor(cat.earningRate * 0.3)); // 30% of category earning rate
 
         if (vipType) {
             switch (vipType.ability) {
                 case 'instant_checkout':
-                    checkoutTime = Date.now() + 100; // Almost instant
+                    browseTime = 100; // Almost instant
                     break;
                 case 'double_stars':
                     earningAmount *= 2;
@@ -789,6 +810,10 @@ class GameState {
                 // Other abilities handled when reader checks out
             }
         }
+
+        // Checkout time will be set when they arrive on the floor
+        const elevatorTravelTime = 2000 + (floor.floorNumber * 500);
+        let checkoutTime = Date.now() + elevatorTravelTime + browseTime;
 
         // Create reader
         const reader = {
@@ -840,7 +865,7 @@ class GameState {
 
         // Generate mission details
         const requestCount = Math.ceil(Math.random() * 3) + 1; // 2-4 books
-        const timeLimit = 60 + Math.floor(Math.random() * 60); // 60-120 seconds
+        const timeLimit = 180 + Math.floor(Math.random() * 120); // 180-300 seconds (3-5 minutes)
         const reward = Math.ceil(requestCount * cat.earningRate * 2); // 2x normal earnings
 
         this.currentMission = {
@@ -1171,8 +1196,8 @@ class GameState {
             this.towerBucks += 1;
         }
 
-        // Spawn new readers periodically (20% chance each tick = more active gameplay)
-        if (Math.random() < 0.20) {
+        // Spawn new readers periodically (10% chance each tick = balanced gameplay)
+        if (Math.random() < 0.10) {
             this.spawnReader();
         }
 

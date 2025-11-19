@@ -125,8 +125,13 @@ class TowerRenderer {
         const numFloors = this.game.floors.length;
         if (numFloors === 0) return;
 
-        const shaftHeight = numFloors * this.floorHeight;
-        const shaftY = this.height - 40 - shaftHeight;
+        // Shaft should only extend to actual built floors, not the build slot
+        // Top floor is at: height - 40 - (1) * floorHeight
+        // Bottom floor is at: height - 40 - (numFloors) * floorHeight
+        // Shaft goes from ground (height - 40) to top of highest floor
+        const topFloorBottom = this.height - 40 - (1) * this.floorHeight;
+        const shaftHeight = (this.height - 40) - topFloorBottom;
+        const shaftY = topFloorBottom;
 
         // Shaft background
         this.ctx.fillStyle = '#757575';
@@ -140,7 +145,7 @@ class TowerRenderer {
         // Floor markers (horizontal lines)
         this.ctx.strokeStyle = '#616161';
         this.ctx.lineWidth = 1;
-        for (let i = 0; i <= numFloors; i++) {
+        for (let i = 0; i < numFloors; i++) {
             const markerY = this.height - 40 - (i * this.floorHeight);
             this.ctx.beginPath();
             this.ctx.moveTo(this.elevatorX, markerY);
@@ -247,6 +252,9 @@ class TowerRenderer {
         this.ctx.textAlign = 'left';
         this.ctx.fillText(`${floor.emoji} ${floor.name}`, x + 10, y + 20);
 
+        // Draw floor decorations based on floor type
+        this.drawFloorDecorations(floor, x, y, colors);
+
         // Draw book shelves (3 categories)
         const shelfY = y + 40;
         const shelfWidth = 120;
@@ -254,7 +262,7 @@ class TowerRenderer {
 
         floor.bookStock.forEach((category, index) => {
             const shelfX = x + 30 + index * (shelfWidth + shelfSpacing);
-            this.drawBookshelf(category, shelfX, shelfY, shelfWidth, 60, colors);
+            this.drawBookshelf(category, shelfX, shelfY, shelfWidth, 60, colors, floor.typeId);
         });
 
         // Store floor bounds for click detection
@@ -267,14 +275,90 @@ class TowerRenderer {
     /**
      * Draw a bookshelf with stock indicator
      */
-    drawBookshelf(category, x, y, width, height, colors) {
-        // Shelf background
-        this.ctx.fillStyle = '#8D6E63';
-        this.ctx.fillRect(x, y, width, height);
+    drawBookshelf(category, x, y, width, height, colors, floorType) {
+        // Determine shelf style and book colors based on floor type
+        const shelfStyles = this.getShelfStyle(floorType);
 
-        this.ctx.strokeStyle = '#5D4037';
+        // Draw shelf with custom shape based on style
+        this.ctx.fillStyle = shelfStyles.shelfColor;
+        this.ctx.strokeStyle = shelfStyles.borderColor;
         this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(x, y, width, height);
+
+        // Draw different shelf shapes based on floor type
+        this.ctx.beginPath();
+
+        switch(shelfStyles.shape) {
+            case 'rounded':
+                // Rounded top corners
+                this.ctx.moveTo(x, y + 10);
+                this.ctx.arcTo(x, y, x + 10, y, 10);
+                this.ctx.lineTo(x + width - 10, y);
+                this.ctx.arcTo(x + width, y, x + width, y + 10, 10);
+                this.ctx.lineTo(x + width, y + height);
+                this.ctx.lineTo(x, y + height);
+                this.ctx.closePath();
+                break;
+
+            case 'scalloped':
+                // Scalloped top edge
+                this.ctx.moveTo(x, y + 10);
+                for (let i = 0; i < 4; i++) {
+                    const scallop_x = x + (width / 4) * i + (width / 8);
+                    const scallop_y = y;
+                    this.ctx.quadraticCurveTo(
+                        x + (width / 4) * i, y + 10,
+                        scallop_x, scallop_y
+                    );
+                    this.ctx.quadraticCurveTo(
+                        x + (width / 4) * (i + 1), y + 10,
+                        x + (width / 4) * (i + 1), y + 10
+                    );
+                }
+                this.ctx.lineTo(x + width, y + height);
+                this.ctx.lineTo(x, y + height);
+                this.ctx.closePath();
+                break;
+
+            case 'arched':
+                // Arched top
+                this.ctx.moveTo(x, y + height);
+                this.ctx.lineTo(x, y + 15);
+                this.ctx.quadraticCurveTo(x + width / 2, y - 5, x + width, y + 15);
+                this.ctx.lineTo(x + width, y + height);
+                this.ctx.closePath();
+                break;
+
+            case 'peaked':
+                // Peaked/triangle top
+                this.ctx.moveTo(x, y + 15);
+                this.ctx.lineTo(x + width / 2, y);
+                this.ctx.lineTo(x + width, y + 15);
+                this.ctx.lineTo(x + width, y + height);
+                this.ctx.lineTo(x, y + height);
+                this.ctx.closePath();
+                break;
+
+            case 'ornate':
+                // Ornate with decorative corners
+                this.ctx.moveTo(x + 5, y + 5);
+                this.ctx.lineTo(x, y + 10);
+                this.ctx.lineTo(x, y + height);
+                this.ctx.lineTo(x + width, y + height);
+                this.ctx.lineTo(x + width, y + 10);
+                this.ctx.lineTo(x + width - 5, y + 5);
+                this.ctx.lineTo(x + width - 5, y);
+                this.ctx.lineTo(x + 5, y);
+                this.ctx.closePath();
+                break;
+
+            default: // 'rectangular'
+                // Standard rectangle
+                this.ctx.rect(x, y, width, height);
+                break;
+        }
+
+        this.ctx.fill();
+        this.ctx.stroke();
 
         // Books (as colored rectangles)
         const stockPercent = category.currentStock / category.maxStock;
@@ -283,9 +367,8 @@ class TowerRenderer {
         for (let i = 0; i < bookCount; i++) {
             const bookX = x + 5 + (i % 5) * 22;
             const bookY = y + 5 + Math.floor(i / 5) * 25;
-            const bookColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
 
-            this.ctx.fillStyle = bookColors[i % bookColors.length];
+            this.ctx.fillStyle = shelfStyles.bookColors[i % shelfStyles.bookColors.length];
             this.ctx.fillRect(bookX, bookY, 18, 20);
         }
 
@@ -322,6 +405,8 @@ class TowerRenderer {
                 // Create new character animation
                 char = {
                     readerId: reader.id,
+                    readerType: reader.type,
+                    readerEmoji: reader.emoji,
                     floorX: floorX,
                     floorY: floorY,
                     x: floorX + 30 + Math.random() * 200, // Start position
@@ -335,47 +420,206 @@ class TowerRenderer {
             }
 
             // Draw character
-            this.drawCharacter(char, floorY);
+            this.drawCharacter(char, floorY, reader);
         });
     }
 
     /**
      * Draw a single character sprite
      */
-    drawCharacter(char, floorY) {
+    drawCharacter(char, floorY, reader) {
         const baseY = floorY + 70; // Bottom of floor
-        const charWidth = 20;
         const charHeight = 40;
 
-        // Simple character representation (placeholder)
-        // Head
-        this.ctx.fillStyle = '#FFD700';
+        // Get character style based on reader type
+        const style = this.getCharacterStyle(reader);
+
+        // Walking animation offset
+        const legOffset = Math.sin(char.animationFrame * 0.2) * 2;
+        const armSwing = Math.sin(char.animationFrame * 0.2) * 4;
+        const bobbing = Math.abs(Math.sin(char.animationFrame * 0.2)) * 1;
+
+        const headY = baseY - charHeight + 8 - bobbing;
+        const bodyY = baseY - charHeight + 16 - bobbing;
+        const legY = baseY - 6 - bobbing;
+
+        // Shadow
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
         this.ctx.beginPath();
-        this.ctx.arc(char.x, baseY - charHeight + 8, 8, 0, Math.PI * 2);
+        this.ctx.ellipse(char.x, baseY, 8, 3, 0, 0, Math.PI * 2);
         this.ctx.fill();
 
-        // Body
-        this.ctx.fillStyle = '#4A90E2';
-        this.ctx.fillRect(char.x - 6, baseY - charHeight + 16, 12, 18);
-
         // Legs (animated walking)
-        const legOffset = Math.sin(char.animationFrame * 0.2) * 3;
-        this.ctx.fillStyle = '#2C3E50';
-        this.ctx.fillRect(char.x - 5, baseY - 6, 3, 6); // Left leg
-        this.ctx.fillRect(char.x + 2, baseY - 6 + legOffset, 3, 6 - legOffset); // Right leg (moving)
+        this.ctx.fillStyle = style.pantsColor;
+        // Left leg
+        this.ctx.fillRect(char.x - 5, legY - legOffset, 4, 8 + legOffset);
+        // Right leg
+        this.ctx.fillRect(char.x + 1, legY + legOffset, 4, 8 - legOffset);
 
-        // Arms
-        this.ctx.strokeStyle = '#2C3E50';
-        this.ctx.lineWidth = 2;
+        // Body/Torso
+        this.ctx.fillStyle = style.shirtColor;
+        this.ctx.fillRect(char.x - 7, bodyY, 14, 20);
+
+        // Add body details/pattern based on type
+        if (style.hasPattern) {
+            this.ctx.fillStyle = style.patternColor;
+            // Simple stripe or dot pattern
+            this.ctx.fillRect(char.x - 5, bodyY + 5, 10, 2);
+            this.ctx.fillRect(char.x - 5, bodyY + 10, 10, 2);
+        }
+
+        // Arms (animated swinging)
+        this.ctx.strokeStyle = style.skinColor;
+        this.ctx.lineWidth = 3;
+        this.ctx.lineCap = 'round';
+
+        // Left arm
         this.ctx.beginPath();
-        this.ctx.moveTo(char.x - 6, baseY - charHeight + 20);
-        this.ctx.lineTo(char.x - 10, baseY - charHeight + 28);
+        this.ctx.moveTo(char.x - 7, bodyY + 2);
+        this.ctx.lineTo(char.x - 10, bodyY + 10 - armSwing);
         this.ctx.stroke();
 
+        // Right arm
         this.ctx.beginPath();
-        this.ctx.moveTo(char.x + 6, baseY - charHeight + 20);
-        this.ctx.lineTo(char.x + 10, baseY - charHeight + 28);
+        this.ctx.moveTo(char.x + 7, bodyY + 2);
+        this.ctx.lineTo(char.x + 10, bodyY + 10 + armSwing);
         this.ctx.stroke();
+
+        // Neck
+        this.ctx.fillStyle = style.skinColor;
+        this.ctx.fillRect(char.x - 2, bodyY - 2, 4, 4);
+
+        // Head
+        this.ctx.fillStyle = style.skinColor;
+        this.ctx.beginPath();
+        this.ctx.arc(char.x, headY, 9, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Hair
+        this.ctx.fillStyle = style.hairColor;
+        if (style.hairStyle === 'short') {
+            this.ctx.beginPath();
+            this.ctx.arc(char.x, headY - 2, 9, Math.PI, Math.PI * 2);
+            this.ctx.fill();
+        } else if (style.hairStyle === 'long') {
+            this.ctx.beginPath();
+            this.ctx.arc(char.x, headY - 2, 9, Math.PI, Math.PI * 2);
+            this.ctx.fill();
+            // Long hair sides
+            this.ctx.fillRect(char.x - 9, headY - 2, 3, 10);
+            this.ctx.fillRect(char.x + 6, headY - 2, 3, 10);
+        } else if (style.hairStyle === 'curly') {
+            // Curly/puffy hair
+            this.ctx.beginPath();
+            this.ctx.arc(char.x - 5, headY - 4, 5, 0, Math.PI * 2);
+            this.ctx.arc(char.x, headY - 6, 6, 0, Math.PI * 2);
+            this.ctx.arc(char.x + 5, headY - 4, 5, 0, Math.PI * 2);
+            this.ctx.fill();
+        } else if (style.hairStyle === 'bald') {
+            // Just the top of head, no extra hair
+        }
+
+        // Facial features
+        // Eyes
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(char.x - 3, headY - 1, 2, 2);
+        this.ctx.fillRect(char.x + 1, headY - 1, 2, 2);
+
+        // Accessories
+        if (style.hasGlasses) {
+            this.ctx.strokeStyle = '#333';
+            this.ctx.lineWidth = 1;
+            this.ctx.beginPath();
+            this.ctx.arc(char.x - 3, headY, 3, 0, Math.PI * 2);
+            this.ctx.arc(char.x + 3, headY, 3, 0, Math.PI * 2);
+            this.ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.moveTo(char.x - 0, headY);
+            this.ctx.lineTo(char.x + 0, headY);
+            this.ctx.stroke();
+        }
+
+        // VIP indicator (sparkle effect)
+        if (reader.type === 'vip') {
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.font = '12px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('✨', char.x - 12, headY - 8);
+        }
+    }
+
+    /**
+     * Get character visual style based on reader type
+     */
+    getCharacterStyle(reader) {
+        const styles = {
+            kid: {
+                skinColor: '#FDBCB4',
+                hairColor: '#8B4513',
+                hairStyle: 'short',
+                shirtColor: '#FF6B6B',
+                pantsColor: '#4ECDC4',
+                hasPattern: true,
+                patternColor: '#FFF',
+                hasGlasses: false
+            },
+            teen: {
+                skinColor: '#F4C2A6',
+                hairColor: '#2C1810',
+                hairStyle: 'long',
+                shirtColor: '#9370DB',
+                pantsColor: '#2C3E50',
+                hasPattern: false,
+                patternColor: '#FFF',
+                hasGlasses: false
+            },
+            adult: {
+                skinColor: '#E8B89A',
+                hairColor: '#4A3728',
+                hairStyle: 'short',
+                shirtColor: '#4A90E2',
+                pantsColor: '#2C3E50',
+                hasPattern: false,
+                patternColor: '#FFF',
+                hasGlasses: Math.random() > 0.5
+            },
+            senior: {
+                skinColor: '#F5D5C3',
+                hairColor: '#CCCCCC',
+                hairStyle: Math.random() > 0.5 ? 'short' : 'bald',
+                shirtColor: '#8B7355',
+                pantsColor: '#5C4033',
+                hasPattern: false,
+                patternColor: '#FFF',
+                hasGlasses: true
+            },
+            student: {
+                skinColor: '#F4C2A6',
+                hairColor: '#654321',
+                hairStyle: 'curly',
+                shirtColor: '#2ECC71',
+                pantsColor: '#34495E',
+                hasPattern: false,
+                patternColor: '#FFF',
+                hasGlasses: true
+            }
+        };
+
+        // VIP readers get special fancy clothes
+        if (reader.type === 'vip') {
+            return {
+                skinColor: '#F4C2A6',
+                hairColor: '#FFD700',
+                hairStyle: 'curly',
+                shirtColor: '#FFD700',
+                pantsColor: '#9370DB',
+                hasPattern: true,
+                patternColor: '#FFF',
+                hasGlasses: true
+            };
+        }
+
+        return styles[reader.type] || styles.adult;
     }
 
     /**
@@ -474,6 +718,204 @@ class TowerRenderer {
         }
 
         console.log('No floor clicked');
+    }
+
+    /**
+     * Get shelf style based on floor type
+     */
+    getShelfStyle(floorType) {
+        const styles = {
+            // Children's floors - light woods with rounded/playful shapes
+            board_books: {
+                shelfColor: '#DEB887',
+                borderColor: '#D2691E',
+                shape: 'rounded',
+                bookColors: ['#FFD700', '#FF6B6B', '#4ECDC4', '#95E1D3', '#FFA07A']
+            },
+            picture_books: {
+                shelfColor: '#F4A460',
+                borderColor: '#D2691E',
+                shape: 'scalloped',
+                bookColors: ['#FF6347', '#FFD700', '#98D8C8', '#87CEEB', '#DDA0DD']
+            },
+            early_readers: {
+                shelfColor: '#D2B48C',
+                borderColor: '#BC9B7D',
+                shape: 'rounded',
+                bookColors: ['#90EE90', '#FFB6C1', '#FFD700', '#87CEEB', '#DDA0DD']
+            },
+            juvenile_series: {
+                shelfColor: '#CD853F',
+                borderColor: '#8B4513',
+                shape: 'peaked',
+                bookColors: ['#4169E1', '#FF4500', '#FFD700', '#32CD32', '#FF69B4']
+            },
+            teen: {
+                shelfColor: '#A0826D',
+                borderColor: '#6D5843',
+                shape: 'rectangular',
+                bookColors: ['#8A2BE2', '#FF1493', '#00CED1', '#FFD700', '#FF6347']
+            },
+
+            // Fiction floors - classic wood tones with traditional shapes
+            fiction: {
+                shelfColor: '#8D6E63',
+                borderColor: '#5D4037',
+                shape: 'rectangular',
+                bookColors: ['#8B4513', '#A0522D', '#CD853F', '#DEB887', '#D2691E']
+            },
+            mystery: {
+                shelfColor: '#6D5843',
+                borderColor: '#5C4033',
+                shape: 'ornate',
+                bookColors: ['#2F4F4F', '#696969', '#708090', '#778899', '#B0C4DE']
+            },
+            romance: {
+                shelfColor: '#BC9B7D',
+                borderColor: '#A0826D',
+                shape: 'arched',
+                bookColors: ['#FF69B4', '#FFB6C1', '#FFC0CB', '#DB7093', '#C71585']
+            },
+            scifi: {
+                shelfColor: '#8B7355',
+                borderColor: '#5C4033',
+                shape: 'rectangular',
+                bookColors: ['#00CED1', '#4169E1', '#6A5ACD', '#7B68EE', '#9370DB']
+            },
+            fantasy: {
+                shelfColor: '#A0826D',
+                borderColor: '#6D5843',
+                shape: 'arched',
+                bookColors: ['#8A2BE2', '#9370DB', '#BA55D3', '#DA70D6', '#EE82EE']
+            },
+            true_crime: {
+                shelfColor: '#5C4033',
+                borderColor: '#3E2723',
+                shape: 'rectangular',
+                bookColors: ['#DC143C', '#B22222', '#8B0000', '#A52A2A', '#CD5C5C']
+            },
+            graphic_novels: {
+                shelfColor: '#D2691E',
+                borderColor: '#8B4513',
+                shape: 'rectangular',
+                bookColors: ['#FF4500', '#FF6347', '#FFD700', '#FFA500', '#FF8C00']
+            },
+
+            // Non-fiction floors - scholarly browns
+            biography: {
+                shelfColor: '#A0826D',
+                borderColor: '#6D5843',
+                shape: 'ornate',
+                bookColors: ['#8B7355', '#A0826D', '#BC9B7D', '#D2B48C', '#DEB887']
+            },
+            history: {
+                shelfColor: '#8B7355',
+                borderColor: '#5C4033',
+                shape: 'ornate',
+                bookColors: ['#704214', '#8B5A3C', '#A0826D', '#BC9B7D', '#8B7355']
+            },
+            local_history: {
+                shelfColor: '#D2B48C',
+                borderColor: '#A0826D',
+                shape: 'peaked',
+                bookColors: ['#CD853F', '#DAA520', '#B8860B', '#D2691E', '#8B4513']
+            },
+            science: {
+                shelfColor: '#8B6F47',
+                borderColor: '#654321',
+                shape: 'rectangular',
+                bookColors: ['#228B22', '#32CD32', '#3CB371', '#2E8B57', '#008B8B']
+            },
+            technology: {
+                shelfColor: '#7A6A4F',
+                borderColor: '#5C4033',
+                shape: 'rectangular',
+                bookColors: ['#4682B4', '#5F9EA0', '#708090', '#778899', '#B0C4DE']
+            },
+            sports: {
+                shelfColor: '#CD853F',
+                borderColor: '#8B4513',
+                shape: 'rectangular',
+                bookColors: ['#FF8C00', '#FFD700', '#FFA500', '#FF4500', '#DC143C']
+            },
+            cookbooks: {
+                shelfColor: '#D2691E',
+                borderColor: '#A0522D',
+                shape: 'rounded',
+                bookColors: ['#FF6347', '#FF7F50', '#FFA07A', '#FA8072', '#E9967A']
+            },
+            library_of_things: {
+                shelfColor: '#BC9B7D',
+                borderColor: '#8B7355',
+                shape: 'rounded',
+                bookColors: ['#FF69B4', '#FFD700', '#00CED1', '#FF6347', '#32CD32']
+            },
+
+            // Food service floors - warm browns
+            coffee_shop: {
+                shelfColor: '#6F4E37',
+                borderColor: '#3E2723',
+                shape: 'rounded',
+                bookColors: ['#795548', '#8D6E63', '#A1887F', '#BCAAA4', '#D7CCC8']
+            },
+            bakery: {
+                shelfColor: '#DEB887',
+                borderColor: '#D2691E',
+                shape: 'scalloped',
+                bookColors: ['#FFE4B5', '#FFDEAD', '#F5DEB3', '#DEB887', '#D2B48C']
+            },
+            hot_drinks_cafe: {
+                shelfColor: '#8B4513',
+                borderColor: '#654321',
+                shape: 'rounded',
+                bookColors: ['#A0522D', '#8B4513', '#D2691E', '#CD853F', '#F4A460']
+            },
+            snack_bar: {
+                shelfColor: '#D2B48C',
+                borderColor: '#BC9B7D',
+                shape: 'rounded',
+                bookColors: ['#FFD700', '#F0E68C', '#EEE8AA', '#FAFAD2', '#FFE4B5']
+            }
+        };
+
+        return styles[floorType] || styles.fiction; // Default to fiction style
+    }
+
+    /**
+     * Draw floor-specific decorations
+     */
+    drawFloorDecorations(floor, x, y, colors) {
+        const floorType = floor.typeId;
+
+        // Draw decorations based on floor type
+        switch(floorType) {
+            case 'board_books':
+            case 'picture_books':
+                // Colorful rugs
+                this.ctx.fillStyle = 'rgba(255, 182, 193, 0.6)';
+                this.ctx.fillRect(x + 180, y + 85, 50, 30);
+                this.ctx.fillRect(x + 350, y + 85, 50, 30);
+                break;
+
+            case 'science':
+            case 'technology':
+                // Computer desks
+                this.ctx.fillStyle = '#696969';
+                this.ctx.fillRect(x + 430, y + 85, 35, 25);
+                this.ctx.fillStyle = '#4682B4';
+                this.ctx.fillRect(x + 435, y + 80, 15, 12);
+                break;
+
+            default:
+                // Plants for most floors
+                this.ctx.fillStyle = '#228B22';
+                this.ctx.beginPath();
+                this.ctx.arc(x + 450, y + 90, 8, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.fillStyle = '#8B4513';
+                this.ctx.fillRect(x + 448, y + 95, 4, 10);
+                break;
+        }
     }
 
     /**

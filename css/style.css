@@ -665,6 +665,13 @@ body {
     margin-bottom: 4px;
 }
 
+.owned-count {
+    font-size: 13px;
+    font-weight: normal;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
 .floor-type-info p {
     font-size: 14px;
     color: var(--text-secondary);

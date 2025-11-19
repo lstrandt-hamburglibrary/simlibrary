@@ -678,12 +678,17 @@ function openBuildModal() {
 
     availableTypes.forEach(floorType => {
         const canAfford = game.stars >= floorType.buildCost;
+
+        // Count how many of this type already exist
+        const existingCount = game.floors.filter(f => f.typeId === floorType.id).length;
+        const ownedText = existingCount > 0 ? ` <span class="owned-count">(You have ${existingCount})</span>` : '';
+
         const card = document.createElement('div');
         card.className = `floor-type-card ${floorType.color} ${!canAfford ? 'disabled' : ''}`;
         card.innerHTML = `
             <div class="floor-type-icon">${floorType.emoji}</div>
             <div class="floor-type-info">
-                <h5>${floorType.name}</h5>
+                <h5>${floorType.name}${ownedText}</h5>
                 <p>${floorType.description}</p>
                 <div class="floor-type-meta">
                     <span>💰 ${floorType.buildCost} stars</span>
