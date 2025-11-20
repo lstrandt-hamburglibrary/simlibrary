@@ -113,7 +113,29 @@ function init() {
         }
     }, 1000);
 
-    console.log('SimLibrary v2.1 (Visual Tower!) initialized!');
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+                console.log('[PWA] Service worker registered:', registration.scope);
+
+                // Check for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New version available
+                            console.log('[PWA] New version available!');
+                        }
+                    });
+                });
+            })
+            .catch((error) => {
+                console.log('[PWA] Service worker registration failed:', error);
+            });
+    }
+
+    console.log('SimLibrary v2.2 (PWA Support!) initialized!');
 }
 
 /**

@@ -1507,3 +1507,82 @@ body {
         gap: 10px;
     }
 }
+
+/* ===================================
+   PWA & Mobile Enhancements
+   =================================== */
+
+/* Prevent text selection on interactive elements */
+button,
+.floor-card,
+.floor-type-card,
+.staff-slot,
+.book-category-card,
+.achievement-card,
+.reader-card {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth touch scrolling */
+.modal-body,
+.tower-container,
+.floors-list {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Active states for touch feedback */
+button:active,
+.floor-card:active,
+.floor-type-card:active:not(.disabled):not(.locked) {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+/* Safe area padding for notched devices */
+@supports (padding: max(0px)) {
+    .app-header {
+        padding-top: max(24px, env(safe-area-inset-top));
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+    }
+
+    .tower-container {
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+}
+
+/* Standalone mode adjustments (when installed as PWA) */
+@media (display-mode: standalone) {
+    body {
+        padding-top: env(safe-area-inset-top);
+    }
+
+    .app-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+}
+
+/* Prevent pull-to-refresh on mobile */
+body {
+    overscroll-behavior-y: contain;
+}
+
+/* Better touch targets */
+@media (pointer: coarse) {
+    button,
+    .floor-card,
+    .floor-type-card,
+    .stats-btn {
+        min-height: 44px;
+    }
+
+    .close-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 24px;
+    }
+}
