@@ -271,6 +271,22 @@ function setupEventListeners() {
             closeConfirmModal(false);
         }
     });
+
+    // Reset game button
+    document.getElementById('reset-game-btn').addEventListener('click', async () => {
+        const confirmed = await showConfirm(
+            'Restart Tower',
+            'This will delete ALL your progress and start fresh. Are you sure?'
+        );
+
+        if (confirmed) {
+            game.reset();
+            closeStatsModal();
+            renderTowerScreen();
+            updateGlobalStats();
+            window.location.reload();
+        }
+    });
 }
 
 /**

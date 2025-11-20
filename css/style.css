@@ -1574,6 +1574,29 @@ body {
     transform: scale(1.02);
 }
 
+/* Reset Button */
+.reset-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    text-align: center;
+}
+
+.reset-btn {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.reset-btn:hover {
+    background: #ee5a5a;
+}
+
 /* ===================================
    PWA & Mobile Enhancements
    =================================== */
