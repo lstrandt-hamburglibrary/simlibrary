@@ -203,8 +203,8 @@ body {
     display: block;
     width: 100%;
     max-width: 600px;
-    height: 800px;
-    touch-action: none;
+    aspect-ratio: 600 / 800;
+    touch-action: pan-y pinch-zoom;
 }
 
 .floors-list {

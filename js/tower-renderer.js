@@ -63,6 +63,10 @@ class TowerRenderer {
     }
 
     init() {
+        // Resize canvas to fit container
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+
         // Set up canvas click handling
         this.canvas.addEventListener('click', (e) => this.handleClick(e));
 
@@ -85,6 +89,30 @@ class TowerRenderer {
 
         // Start render loop
         this.render();
+    }
+
+    resizeCanvas() {
+        // Get the actual display size
+        const rect = this.canvas.getBoundingClientRect();
+        const displayWidth = rect.width;
+        const displayHeight = rect.height;
+
+        // Set canvas internal size to match display size for crisp rendering
+        if (this.canvas.width !== displayWidth || this.canvas.height !== displayHeight) {
+            this.canvas.width = displayWidth;
+            this.canvas.height = displayHeight;
+            this.width = displayWidth;
+            this.height = displayHeight;
+
+            // Scale floor dimensions proportionally
+            const scale = displayWidth / 600;
+            this.floorWidth = 500 * scale;
+            this.floorX = 50 * scale;
+            this.floorHeight = 120 * scale;
+            this.elevatorWidth = 40 * scale;
+            this.elevatorX = 5 * scale;
+            this.elevatorCarHeight = 80 * scale;
+        }
     }
 
     /**
