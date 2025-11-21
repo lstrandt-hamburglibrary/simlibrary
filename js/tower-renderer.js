@@ -1207,15 +1207,17 @@ class TowerRenderer {
             for (const item of items) {
                 if (!item.found && item._renderBounds) {
                     const b = item._renderBounds;
-                    if (clickX >= b.x && clickX <= b.x + b.width &&
-                        clickY >= b.y && clickY <= b.y + b.height) {
+                    // Expand hit area by 50% for easier clicking
+                    const padding = b.width * 0.25;
+                    if (clickX >= b.x - padding && clickX <= b.x + b.width + padding &&
+                        clickY >= b.y - padding && clickY <= b.y + b.height + padding) {
                         console.log('Find item clicked:', item.emoji);
                         // Mark as found
                         item.found = true;
                         this.game.currentFindMission.found++;
 
                         // Spawn celebration effect
-                        this.spawnSparkle(clickX + this.scrollY, clickY);
+                        this.spawnSparkle(clickX, clickY + this.scrollY);
                         this.spawnTextParticle(clickX, clickY + this.scrollY, `Found ${item.emoji}!`, item.color);
 
                         // Check if mission complete
@@ -1708,15 +1710,17 @@ class TowerRenderer {
                 for (const item of items) {
                     if (!item.found && item._renderBounds) {
                         const b = item._renderBounds;
-                        if (clickX >= b.x && clickX <= b.x + b.width &&
-                            clickY >= b.y && clickY <= b.y + b.height) {
+                        // Expand hit area by 50% for easier tapping
+                        const padding = b.width * 0.25;
+                        if (clickX >= b.x - padding && clickX <= b.x + b.width + padding &&
+                            clickY >= b.y - padding && clickY <= b.y + b.height + padding) {
                             console.log('Find item tapped:', item.emoji);
                             // Mark as found
                             item.found = true;
                             this.game.currentFindMission.found++;
 
                             // Spawn celebration effect
-                            this.spawnSparkle(clickX + this.scrollY, clickY);
+                            this.spawnSparkle(clickX, clickY + this.scrollY);
                             this.spawnTextParticle(clickX, clickY + this.scrollY, `Found ${item.emoji}!`, item.color);
 
                             // Check if mission complete
