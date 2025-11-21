@@ -550,7 +550,7 @@ class TowerRenderer {
             const x = floorX + item.x * this.floorWidth;
             const y = floorY + item.y * this.floorHeight;
             const scale = this.getScale();
-            const size = 16 * scale;
+            const size = 24 * scale;
 
             // Draw glowing background
             this.ctx.fillStyle = `${item.color}40`; // 25% opacity
