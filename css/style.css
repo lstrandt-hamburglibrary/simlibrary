@@ -1713,21 +1713,27 @@ body {
 }
 
 /* ===================================
-   Mood Meter
+   Compact Stats & Mood Meter
    =================================== */
 
+.stat.compact {
+    min-width: auto;
+    padding: 4px 8px;
+}
+
+.stat.compact .stat-label {
+    display: none;
+}
+
 .mood-stat {
-    min-width: 60px;
+    min-width: auto;
+    padding: 4px 8px;
 }
 
 .mood-stat .stat-icon {
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .mood-stat .stat-value {
-    font-size: 12px;
-}
-
-.mood-stat .stat-label {
-    font-size: 9px;
+    font-size: 11px;
 }

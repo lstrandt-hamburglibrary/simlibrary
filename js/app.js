@@ -302,7 +302,6 @@ function updateGlobalStats() {
         const moodDesc = game.getMoodDescription();
         document.getElementById('mood-emoji').textContent = moodDesc.emoji;
         document.getElementById('mood-value').textContent = Math.floor(game.mood);
-        document.getElementById('mood-label').textContent = moodDesc.text;
     }
 
     // Check for special visitor notifications
