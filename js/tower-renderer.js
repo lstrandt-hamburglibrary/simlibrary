@@ -563,22 +563,27 @@ class TowerRenderer {
             r.floorId === floor.id && r.elevatorState === 'arrived'
         );
 
+        const scale = this.getScale();
+
         floorReaders.forEach(reader => {
             // Find or create character sprite for this reader
             let char = this.characters.find(c => c.readerId === reader.id);
 
             if (!char) {
-                // Create new character animation
+                // Create new character animation - scale positions to floor size
+                const startOffset = 30 * scale + Math.random() * (100 * scale);
+                const targetOffset = 150 * scale + Math.random() * (this.floorWidth - 200 * scale);
+
                 char = {
                     readerId: reader.id,
                     readerType: reader.type,
                     readerEmoji: reader.emoji,
                     floorX: floorX,
                     floorY: floorY,
-                    x: floorX + 30 + Math.random() * 200, // Start position
-                    targetX: floorX + 250 + Math.random() * 150, // Walking to bookshelf
+                    x: floorX + startOffset, // Start position (scaled)
+                    targetX: floorX + targetOffset, // Walking to bookshelf (scaled)
                     direction: 1, // 1 = right, -1 = left
-                    walkSpeed: 0.5 + Math.random() * 0.5,
+                    walkSpeed: (0.5 + Math.random() * 0.5) * scale,
                     state: 'walking', // walking, reading
                     animationFrame: 0
                 };
