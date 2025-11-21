@@ -103,6 +103,20 @@ class GameState {
         this.missionHistory = []; // Completed missions
         this.nextMissionTime = Date.now() + 60000; // First mission in 60s
 
+        // Find missions (Tiny Tower style)
+        this.currentFindMission = null;
+        this.nextFindMissionTime = Date.now() + 120000; // First find mission in 2 minutes
+        this.findMissionItems = [
+            { id: 'red_book', emoji: '📕', name: 'Red Book', color: '#FF6B6B' },
+            { id: 'blue_book', emoji: '📘', name: 'Blue Book', color: '#4ECDC4' },
+            { id: 'green_book', emoji: '📗', name: 'Green Book', color: '#95E1A3' },
+            { id: 'gold_coin', emoji: '🪙', name: 'Gold Coin', color: '#FFD700' },
+            { id: 'star', emoji: '⭐', name: 'Star', color: '#FFD700' },
+            { id: 'heart', emoji: '❤️', name: 'Heart', color: '#FF69B4' },
+            { id: 'diamond', emoji: '💎', name: 'Diamond', color: '#00CED1' },
+            { id: 'key', emoji: '🔑', name: 'Key', color: '#DAA520' }
+        ];
+
         // Special events
         this.currentEvent = null;
         this.nextEventTime = Date.now() + 300000; // First event in 5 minutes
@@ -1245,6 +1259,114 @@ class GameState {
     }
 
     /**
+     * Generate a find mission
+     */
+    generateFindMission() {
+        if (this.floors.length < 2) return; // Need at least 2 floors
+
+        // Pick random item type
+        const itemType = this.findMissionItems[Math.floor(Math.random() * this.findMissionItems.length)];
+
+        // Determine how many to find (3-5)
+        const count = 3 + Math.floor(Math.random() * 3);
+
+        // Place items on random floors
+        const readyFloors = this.floors.filter(f => f.status === 'ready');
+        if (readyFloors.length < count) return;
+
+        const items = [];
+        const usedFloors = new Set();
+
+        for (let i = 0; i < count; i++) {
+            let floor;
+            do {
+                floor = readyFloors[Math.floor(Math.random() * readyFloors.length)];
+            } while (usedFloors.has(floor.id) && usedFloors.size < readyFloors.length);
+
+            usedFloors.add(floor.id);
+
+            // Random position on floor
+            items.push({
+                id: this.generateId(),
+                floorId: floor.id,
+                type: itemType.id,
+                emoji: itemType.emoji,
+                color: itemType.color,
+                found: false,
+                x: 0.2 + Math.random() * 0.6, // 20-80% across floor
+                y: 0.3 + Math.random() * 0.4  // 30-70% down floor
+            });
+        }
+
+        // Calculate reward
+        const reward = count * 10;
+        const rewardBucks = Math.random() < 0.3 ? 1 : 0;
+
+        this.currentFindMission = {
+            id: this.generateId(),
+            itemType: itemType,
+            items: items,
+            found: 0,
+            total: count,
+            reward: reward,
+            rewardBucks: rewardBucks,
+            startTime: Date.now(),
+            expiryTime: Date.now() + 90000 // 90 seconds to find all
+        };
+    }
+
+    /**
+     * Check if a tap found a hidden item
+     */
+    checkFindMissionTap(floorId, relativeX, relativeY) {
+        if (!this.currentFindMission) return null;
+
+        const items = this.currentFindMission.items;
+        for (const item of items) {
+            if (item.floorId === floorId && !item.found) {
+                // Check if tap is close to item (within 15% tolerance)
+                const dx = Math.abs(item.x - relativeX);
+                const dy = Math.abs(item.y - relativeY);
+
+                if (dx < 0.15 && dy < 0.15) {
+                    item.found = true;
+                    this.currentFindMission.found++;
+
+                    // Check if mission complete
+                    if (this.currentFindMission.found >= this.currentFindMission.total) {
+                        this.completeFindMission();
+                    }
+
+                    return item;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Complete find mission
+     */
+    completeFindMission() {
+        if (!this.currentFindMission) return;
+
+        // Award rewards
+        this.stars += this.currentFindMission.reward;
+        this.stats.totalStarsEarned += this.currentFindMission.reward;
+
+        if (this.currentFindMission.rewardBucks > 0) {
+            this.towerBucks += this.currentFindMission.rewardBucks;
+            this.stats.totalTowerBucksEarned += this.currentFindMission.rewardBucks;
+        }
+
+        // Clear mission
+        this.currentFindMission = null;
+
+        // Next find mission in 2-4 minutes
+        this.nextFindMissionTime = Date.now() + (120000 + Math.random() * 120000);
+    }
+
+    /**
      * Check and unlock achievements
      */
     checkAchievements() {
@@ -1566,6 +1688,18 @@ class GameState {
             this.nextEventTime = now + (180000 + Math.random() * 300000);
         }
 
+        // Generate find mission if it's time
+        if (!this.currentFindMission && now >= this.nextFindMissionTime) {
+            this.generateFindMission();
+        }
+
+        // Check find mission expiry
+        if (this.currentFindMission && now >= this.currentFindMission.expiryTime) {
+            this.currentFindMission = null;
+            // Next find mission in 2-4 minutes
+            this.nextFindMissionTime = now + (120000 + Math.random() * 120000);
+        }
+
         // Update time played stat (every tick = 1 second)
         this.stats.timePlayed += 1;
 
@@ -1604,6 +1738,8 @@ class GameState {
             nextMissionTime: this.nextMissionTime,
             currentEvent: this.currentEvent,
             nextEventTime: this.nextEventTime,
+            currentFindMission: this.currentFindMission,
+            nextFindMissionTime: this.nextFindMissionTime,
             stats: this.stats,
             achievements: this.achievements,
             dailyLogin: this.dailyLogin,
@@ -1635,6 +1771,8 @@ class GameState {
                 this.nextMissionTime = data.nextMissionTime || (Date.now() + 60000);
                 this.currentEvent = data.currentEvent || null;
                 this.nextEventTime = data.nextEventTime || (Date.now() + 300000);
+                this.currentFindMission = data.currentFindMission || null;
+                this.nextFindMissionTime = data.nextFindMissionTime || (Date.now() + 120000);
 
                 // Load stats with defaults for new stat types
                 if (data.stats) {

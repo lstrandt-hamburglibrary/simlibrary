@@ -531,6 +531,47 @@ class TowerRenderer {
 
         // Draw characters on this floor
         this.drawFloorCharacters(floor, x, y);
+
+        // Draw hidden items for find mission
+        this.drawFindMissionItems(floor, x, y);
+    }
+
+    /**
+     * Draw hidden items for find mission on this floor
+     */
+    drawFindMissionItems(floor, floorX, floorY) {
+        if (!this.game.currentFindMission) return;
+
+        const items = this.game.currentFindMission.items.filter(
+            item => item.floorId === floor.id && !item.found
+        );
+
+        items.forEach(item => {
+            const x = floorX + item.x * this.floorWidth;
+            const y = floorY + item.y * this.floorHeight;
+            const scale = this.getScale();
+            const size = 16 * scale;
+
+            // Draw glowing background
+            this.ctx.fillStyle = `${item.color}40`; // 25% opacity
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, size * 1.2, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Draw item emoji
+            this.ctx.font = `${Math.round(size)}px Arial`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(item.emoji, x, y);
+
+            // Store item bounds for tap detection
+            item._renderBounds = {
+                x: x - size,
+                y: y - size,
+                width: size * 2,
+                height: size * 2
+            };
+        });
     }
 
     /**
@@ -1390,6 +1431,35 @@ class TowerRenderer {
                     }
                     this.isDragging = false;
                     return;
+                }
+            }
+
+            // Check find mission items first
+            if (this.game.currentFindMission) {
+                const items = this.game.currentFindMission.items;
+                for (const item of items) {
+                    if (!item.found && item._renderBounds) {
+                        const b = item._renderBounds;
+                        if (clickX >= b.x && clickX <= b.x + b.width &&
+                            clickY >= b.y && clickY <= b.y + b.height) {
+                            console.log('Find item tapped:', item.emoji);
+                            // Mark as found
+                            item.found = true;
+                            this.game.currentFindMission.found++;
+
+                            // Spawn celebration effect
+                            this.spawnSparkle(clickX + this.scrollY, clickY);
+                            this.spawnTextParticle(clickX, clickY + this.scrollY, `Found ${item.emoji}!`, item.color);
+
+                            // Check if mission complete
+                            if (this.game.currentFindMission.found >= this.game.currentFindMission.total) {
+                                this.game.completeFindMission();
+                            }
+
+                            this.isDragging = false;
+                            return;
+                        }
+                    }
                 }
             }
 

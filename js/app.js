@@ -1109,6 +1109,32 @@ function renderMissionBanner() {
     const mission = game.currentMission;
     const event = game.currentEvent;
 
+    // Show find mission if active (green banner)
+    const findMission = game.currentFindMission;
+    if (findMission && Date.now() < findMission.expiryTime) {
+        const timeRemaining = Math.max(0, Math.ceil((findMission.expiryTime - Date.now()) / 1000));
+        const seconds = timeRemaining;
+
+        banner.innerHTML = `
+            <div class="mission-info">
+                <div class="mission-title">
+                    🔍 Find ${findMission.total} ${findMission.itemType.emoji} ${findMission.itemType.name}s!
+                </div>
+                <div class="mission-details">
+                    Found: ${findMission.found}/${findMission.total} • Tap the items hidden on floors
+                </div>
+            </div>
+            <div class="mission-reward">
+                <div>${findMission.reward} ⭐${findMission.rewardBucks > 0 ? ` + ${findMission.rewardBucks} 💎` : ''}</div>
+                <div class="mission-timer">${seconds}s</div>
+            </div>
+        `;
+
+        banner.style.display = 'flex';
+        banner.style.background = 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)';
+        return;
+    }
+
     // Show event if active (takes priority visually with different style)
     if (event && Date.now() < event.endTime) {
         const timeRemaining = Math.max(0, Math.ceil((event.endTime - Date.now()) / 1000));
