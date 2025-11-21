@@ -1107,37 +1107,64 @@ function closeCollectionModal() {
 function renderMissionBanner() {
     const banner = document.getElementById('mission-banner');
     const mission = game.currentMission;
+    const event = game.currentEvent;
 
-    if (!mission || mission.status !== 'active') {
-        banner.style.display = 'none';
+    // Show event if active (takes priority visually with different style)
+    if (event && Date.now() < event.endTime) {
+        const timeRemaining = Math.max(0, Math.ceil((event.endTime - Date.now()) / 1000));
+        const seconds = timeRemaining % 60;
+
+        banner.innerHTML = `
+            <div class="mission-info">
+                <div class="mission-title">
+                    ${event.emoji} ${event.name}
+                </div>
+                <div class="mission-details">
+                    ${event.description}
+                </div>
+            </div>
+            <div class="mission-reward">
+                <div class="mission-timer">${seconds}s</div>
+            </div>
+        `;
+
+        banner.style.display = 'flex';
+        banner.style.background = 'linear-gradient(135deg, #9C27B0 0%, #E91E63 100%)';
         return;
     }
 
-    // Calculate progress and time remaining
-    const progressPercent = (mission.progress / mission.requestCount) * 100;
-    const timeRemaining = Math.max(0, Math.ceil((mission.expiryTime - Date.now()) / 1000));
-    const minutes = Math.floor(timeRemaining / 60);
-    const seconds = timeRemaining % 60;
+    // Show mission if active
+    if (mission && mission.status === 'active') {
+        // Calculate progress and time remaining
+        const progressPercent = (mission.progress / mission.requestCount) * 100;
+        const timeRemaining = Math.max(0, Math.ceil((mission.expiryTime - Date.now()) / 1000));
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
 
-    banner.innerHTML = `
-        <div class="mission-info">
-            <div class="mission-title">
-                📝 ${mission.requesterName} needs ${mission.requestCount} ${mission.categoryName} books!
+        banner.innerHTML = `
+            <div class="mission-info">
+                <div class="mission-title">
+                    📝 ${mission.requesterName} needs ${mission.requestCount} ${mission.categoryName} books!
+                </div>
+                <div class="mission-details">
+                    Floor: ${mission.floorName} • Progress: ${mission.progress}/${mission.requestCount}
+                </div>
+                <div class="mission-progress">
+                    <div class="mission-progress-fill" style="width: ${progressPercent}%"></div>
+                </div>
             </div>
-            <div class="mission-details">
-                Floor: ${mission.floorName} • Progress: ${mission.progress}/${mission.requestCount}
+            <div class="mission-reward">
+                <div>${mission.reward} ⭐${mission.rewardBucks > 0 ? ` + ${mission.rewardBucks} 💎` : ''}</div>
+                <div class="mission-timer">${minutes}:${seconds.toString().padStart(2, '0')}</div>
             </div>
-            <div class="mission-progress">
-                <div class="mission-progress-fill" style="width: ${progressPercent}%"></div>
-            </div>
-        </div>
-        <div class="mission-reward">
-            <div>${mission.reward} ⭐${mission.rewardBucks > 0 ? ` + ${mission.rewardBucks} 💎` : ''}</div>
-            <div class="mission-timer">${minutes}:${seconds.toString().padStart(2, '0')}</div>
-        </div>
-    `;
+        `;
 
-    banner.style.display = 'flex';
+        banner.style.display = 'flex';
+        banner.style.background = 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)';
+        return;
+    }
+
+    banner.style.display = 'none';
 }
 
 // Initialize app when DOM is ready

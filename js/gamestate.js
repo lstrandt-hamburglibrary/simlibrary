@@ -40,13 +40,18 @@ class GameState {
                    'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin']
         };
 
-        // Reader personality types
+        // Reader personality types with floor preferences
         this.readerTypes = [
-            { id: 'kid', emoji: '👧', name: 'Kid', weight: 25 },
-            { id: 'teen', emoji: '🧑', name: 'Teen', weight: 20 },
-            { id: 'adult', emoji: '👔', name: 'Adult', weight: 30 },
-            { id: 'senior', emoji: '👴', name: 'Senior', weight: 15 },
-            { id: 'student', emoji: '🎓', name: 'Student', weight: 10 }
+            { id: 'kid', emoji: '👧', name: 'Kid', weight: 25,
+              preferredFloors: ['board_books', 'picture_books', 'early_readers', 'juvenile_series'] },
+            { id: 'teen', emoji: '🧑', name: 'Teen', weight: 20,
+              preferredFloors: ['teen', 'scifi', 'fantasy', 'graphic_novels', 'manga'] },
+            { id: 'adult', emoji: '👔', name: 'Adult', weight: 30,
+              preferredFloors: ['fiction', 'mystery', 'romance', 'biography', 'business'] },
+            { id: 'senior', emoji: '👴', name: 'Senior', weight: 15,
+              preferredFloors: ['fiction', 'mystery', 'history', 'biography', 'large_print'] },
+            { id: 'student', emoji: '🎓', name: 'Student', weight: 10,
+              preferredFloors: ['science', 'technology', 'history', 'reference', 'textbooks'] }
         ];
 
         // VIP reader types (rare, special abilities)
@@ -97,6 +102,44 @@ class GameState {
         this.currentMission = null;
         this.missionHistory = []; // Completed missions
         this.nextMissionTime = Date.now() + 60000; // First mission in 60s
+
+        // Special events
+        this.currentEvent = null;
+        this.nextEventTime = Date.now() + 300000; // First event in 5 minutes
+        this.eventTypes = [
+            {
+                id: 'author_visit',
+                name: 'Author Visit',
+                emoji: '✍️',
+                description: 'A famous author is visiting! 2x stars from all checkouts.',
+                duration: 60000, // 1 minute
+                effect: { type: 'star_multiplier', value: 2 }
+            },
+            {
+                id: 'book_sale',
+                name: 'Book Sale',
+                emoji: '🏷️',
+                description: 'Book sale event! Readers come 50% faster.',
+                duration: 60000,
+                effect: { type: 'spawn_rate', value: 1.5 }
+            },
+            {
+                id: 'reading_challenge',
+                name: 'Reading Challenge',
+                emoji: '📚',
+                description: 'Reading challenge! Earn bonus Tower Bucks.',
+                duration: 60000,
+                effect: { type: 'bonus_bucks', value: 1 }
+            },
+            {
+                id: 'quiet_hours',
+                name: 'Quiet Hours',
+                emoji: '🤫',
+                description: 'Quiet study time! Readers browse 50% longer.',
+                duration: 60000,
+                effect: { type: 'browse_time', value: 1.5 }
+            }
+        ];
 
         // Stats tracking (all-time)
         this.stats = {
@@ -801,10 +844,40 @@ class GameState {
             }
         }
 
-        // If not directed to mission (or mission not available), pick randomly
+        // If not directed to mission (or mission not available), pick based on preferences
         if (!floor) {
-            // Pick a random floor
-            floor = readyFloors[Math.floor(Math.random() * readyFloors.length)];
+            // First, determine reader type to know their preferences
+            const isVIP = Math.random() < 0.10;
+            let tempReaderType = null;
+
+            if (!isVIP) {
+                // Pick reader type early to get preferences
+                const totalWeight = this.readerTypes.reduce((sum, type) => sum + type.weight, 0);
+                const rand = Math.random() * totalWeight;
+                let cumulative = 0;
+                for (const type of this.readerTypes) {
+                    cumulative += type.weight;
+                    if (rand <= cumulative) {
+                        tempReaderType = type;
+                        break;
+                    }
+                }
+                if (!tempReaderType) tempReaderType = this.readerTypes[0];
+            }
+
+            // Filter floors by preference (70% chance to use preferred floor if available)
+            let selectedFloors = readyFloors;
+            if (tempReaderType && tempReaderType.preferredFloors && Math.random() < 0.70) {
+                const preferredFloors = readyFloors.filter(f =>
+                    tempReaderType.preferredFloors.includes(f.typeId)
+                );
+                if (preferredFloors.length > 0) {
+                    selectedFloors = preferredFloors;
+                }
+            }
+
+            // Pick a random floor from selection
+            floor = selectedFloors[Math.floor(Math.random() * selectedFloors.length)];
 
             // Pick a category with stock
             const stockedCategories = floor.bookStock
@@ -816,6 +889,10 @@ class GameState {
             const selected = stockedCategories[Math.floor(Math.random() * stockedCategories.length)];
             cat = selected.cat;
             idx = selected.idx;
+
+            // Store the pre-determined reader type to use later
+            this._pendingReaderType = isVIP ? null : tempReaderType;
+            this._pendingIsVIP = isVIP;
         }
 
         // Generate random name
@@ -823,9 +900,14 @@ class GameState {
         const lastName = this.readerNames.last[Math.floor(Math.random() * this.readerNames.last.length)];
         const fullName = `${firstName} ${lastName}`;
 
-        // Determine if VIP (10% chance)
-        const isVIP = Math.random() < 0.10;
-        let readerType, vipType = null;
+        // Determine if VIP - use pre-determined value if available
+        const isVIP = this._pendingIsVIP !== undefined ? this._pendingIsVIP : Math.random() < 0.10;
+        let readerType = this._pendingReaderType || null;
+        let vipType = null;
+
+        // Clear pending values
+        this._pendingReaderType = undefined;
+        this._pendingIsVIP = undefined;
 
         if (isVIP) {
             // Pick random VIP type (weighted)
@@ -840,8 +922,8 @@ class GameState {
             }
             // Fallback to first VIP if none selected
             if (!vipType) vipType = this.vipTypes[0];
-        } else {
-            // Pick regular reader type (weighted)
+        } else if (!readerType) {
+            // Pick regular reader type (weighted) if not already determined
             const totalWeight = this.readerTypes.reduce((sum, type) => sum + type.weight, 0);
             const rand = Math.random() * totalWeight;
             let cumulative = 0;
@@ -858,6 +940,10 @@ class GameState {
 
         // Calculate browse time and earnings based on VIP ability
         let browseTime = 8000; // Default 8 seconds of browsing AFTER arrival
+
+        // Apply event browse time multiplier
+        browseTime = Math.floor(browseTime * this.getEventEffect('browse_time'));
+
         let earningAmount = Math.max(1, Math.floor(cat.earningRate * 0.3)); // 30% of category earning rate
 
         if (vipType) {
@@ -1128,6 +1214,37 @@ class GameState {
     }
 
     /**
+     * Generate a random special event
+     */
+    generateEvent() {
+        // Pick random event type
+        const eventType = this.eventTypes[Math.floor(Math.random() * this.eventTypes.length)];
+
+        this.currentEvent = {
+            ...eventType,
+            startTime: Date.now(),
+            endTime: Date.now() + eventType.duration
+        };
+    }
+
+    /**
+     * Get active event effect multiplier for a specific type
+     */
+    getEventEffect(effectType) {
+        if (!this.currentEvent || this.currentEvent.effect.type !== effectType) {
+            return 1; // No effect
+        }
+        return this.currentEvent.effect.value;
+    }
+
+    /**
+     * Check if bonus bucks should be awarded (for reading challenge event)
+     */
+    shouldAwardBonusBucks() {
+        return this.currentEvent && this.currentEvent.effect.type === 'bonus_bucks';
+    }
+
+    /**
      * Check and unlock achievements
      */
     checkAchievements() {
@@ -1322,22 +1439,32 @@ class GameState {
                     // Consume a book
                     floor.bookStock[reader.categoryIndex].currentStock -= 1;
 
+                    // Apply event star multiplier
+                    const starMultiplier = this.getEventEffect('star_multiplier');
+                    const finalEarnings = Math.floor(reader.earningAmount * starMultiplier);
+
                     // Earn stars
-                    this.stars += reader.earningAmount;
+                    this.stars += finalEarnings;
 
                     // Earn XP
-                    this.xp += reader.earningAmount;
+                    this.xp += finalEarnings;
+
+                    // Award bonus Tower Bucks during reading challenge
+                    if (this.shouldAwardBonusBucks() && Math.random() < 0.2) { // 20% chance
+                        this.towerBucks += 1;
+                        this.stats.totalTowerBucksEarned += 1;
+                    }
 
                     // Track checkout for particle effects
                     this._recentCheckouts.push({
                         floorId: reader.floorId,
-                        stars: reader.earningAmount,
+                        stars: finalEarnings,
                         isVIP: reader.type === 'vip'
                     });
 
                     // Update stats
                     this.stats.totalBooksCheckedOut += 1;
-                    this.stats.totalStarsEarned += reader.earningAmount;
+                    this.stats.totalStarsEarned += finalEarnings;
                     this.stats.totalReadersServed += 1;
 
                     // Track reader in collection
@@ -1401,11 +1528,14 @@ class GameState {
         // Check rush hour status
         this.checkRushHour();
 
-        // Spawn new readers with increased rate during rush hour
+        // Spawn new readers with increased rate during rush hour and events
         let spawnChance = 0.10; // Base 10% chance
         if (this.transitSchedule.isRushHour) {
             spawnChance = 0.40; // 40% during rush hour = 4x more readers!
         }
+
+        // Apply event spawn rate multiplier
+        spawnChance *= this.getEventEffect('spawn_rate');
 
         if (Math.random() < spawnChance) {
             this.spawnReader();
@@ -1422,6 +1552,18 @@ class GameState {
             this.currentMission = null;
             // Next mission in 2-5 minutes
             this.nextMissionTime = now + (120000 + Math.random() * 180000);
+        }
+
+        // Generate new special event if it's time and no active event
+        if (!this.currentEvent && now >= this.nextEventTime) {
+            this.generateEvent();
+        }
+
+        // Check event expiry
+        if (this.currentEvent && now >= this.currentEvent.endTime) {
+            this.currentEvent = null;
+            // Next event in 3-8 minutes
+            this.nextEventTime = now + (180000 + Math.random() * 300000);
         }
 
         // Update time played stat (every tick = 1 second)
@@ -1460,6 +1602,8 @@ class GameState {
             currentMission: this.currentMission,
             missionHistory: this.missionHistory,
             nextMissionTime: this.nextMissionTime,
+            currentEvent: this.currentEvent,
+            nextEventTime: this.nextEventTime,
             stats: this.stats,
             achievements: this.achievements,
             dailyLogin: this.dailyLogin,
@@ -1489,6 +1633,8 @@ class GameState {
                 this.currentMission = data.currentMission || null;
                 this.missionHistory = data.missionHistory || [];
                 this.nextMissionTime = data.nextMissionTime || (Date.now() + 60000);
+                this.currentEvent = data.currentEvent || null;
+                this.nextEventTime = data.nextEventTime || (Date.now() + 300000);
 
                 // Load stats with defaults for new stat types
                 if (data.stats) {
