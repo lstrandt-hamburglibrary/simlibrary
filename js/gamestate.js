@@ -1262,26 +1262,29 @@ class GameState {
      * Generate a find mission
      */
     generateFindMission() {
-        if (this.floors.length < 2) return; // Need at least 2 floors
+        // Place items on random floors
+        const readyFloors = this.floors.filter(f => f.status === 'ready');
+        if (readyFloors.length < 1) return; // Need at least 1 floor
 
         // Pick random item type
         const itemType = this.findMissionItems[Math.floor(Math.random() * this.findMissionItems.length)];
 
-        // Determine how many to find (3-5)
-        const count = 3 + Math.floor(Math.random() * 3);
-
-        // Place items on random floors
-        const readyFloors = this.floors.filter(f => f.status === 'ready');
-        if (readyFloors.length < count) return;
+        // Determine how many to find (3-5, but cap at number of floors)
+        const maxCount = Math.min(5, readyFloors.length);
+        const count = Math.min(3 + Math.floor(Math.random() * 3), maxCount);
 
         const items = [];
         const usedFloors = new Set();
 
         for (let i = 0; i < count; i++) {
             let floor;
+            let attempts = 0;
+
+            // Try to find unique floor, allow duplicates if necessary
             do {
                 floor = readyFloors[Math.floor(Math.random() * readyFloors.length)];
-            } while (usedFloors.has(floor.id) && usedFloors.size < readyFloors.length);
+                attempts++;
+            } while (usedFloors.has(floor.id) && attempts < 20 && usedFloors.size < readyFloors.length);
 
             usedFloors.add(floor.id);
 
@@ -1297,6 +1300,8 @@ class GameState {
                 y: 0.3 + Math.random() * 0.4  // 30-70% down floor
             });
         }
+
+        console.log('Generated find mission:', count, itemType.name, 'on floors:', items.map(i => i.floorId));
 
         // Calculate reward
         const reward = count * 10;
