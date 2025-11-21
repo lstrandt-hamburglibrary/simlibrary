@@ -290,12 +290,65 @@ function setupEventListeners() {
 }
 
 /**
- * Update global stats display (stars, bucks, level)
+ * Update global stats display (stars, bucks, level, mood)
  */
 function updateGlobalStats() {
     document.getElementById('total-stars').textContent = Math.floor(game.stars);
     document.getElementById('total-bucks').textContent = game.towerBucks;
     document.getElementById('player-level').textContent = game.level;
+
+    // Update mood meter
+    if (game.mood !== undefined) {
+        const moodDesc = game.getMoodDescription();
+        document.getElementById('mood-emoji').textContent = moodDesc.emoji;
+        document.getElementById('mood-value').textContent = Math.floor(game.mood);
+        document.getElementById('mood-label').textContent = moodDesc.text;
+    }
+
+    // Check for special visitor notifications
+    if (game._newSpecialVisitor) {
+        showToast(`${game._newSpecialVisitor.emoji} ${game._newSpecialVisitor.name} arrived! ${game._newSpecialVisitor.description}`);
+        delete game._newSpecialVisitor;
+    }
+
+    // Check for departing visitors
+    if (game._departingVisitor) {
+        showToast(`${game._departingVisitor.emoji} ${game._departingVisitor.name} left the library.`);
+        delete game._departingVisitor;
+    }
+}
+
+/**
+ * Show a toast notification
+ */
+function showToast(message) {
+    // Check if toast container exists, create if not
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999;';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-top: 8px;
+        font-size: 14px;
+        animation: fadeInUp 0.3s ease;
+    `;
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 /**

@@ -299,6 +299,9 @@ class TowerRenderer {
         // Update and draw characters
         this.updateCharacters();
 
+        // Draw special visitors
+        this.drawSpecialVisitors();
+
         // Process checkout rewards (spawn coins)
         this.processCheckoutRewards();
 
@@ -957,6 +960,90 @@ class TowerRenderer {
         }
 
         return thoughtsByType[reader.type] || thoughtsByType.adult;
+    }
+
+    /**
+     * Draw special wandering visitors
+     */
+    drawSpecialVisitors() {
+        if (!this.game.specialVisitors) return;
+
+        this.game.specialVisitors.forEach(visitor => {
+            // Find floor position
+            if (visitor.currentFloorIndex >= this.game.floors.length) return;
+
+            const floor = this.game.floors[visitor.currentFloorIndex];
+            if (!floor || !floor._renderBounds) return;
+
+            const b = floor._renderBounds;
+            const x = b.x + visitor.x * b.width;
+            const y = b.y + b.height - 10;
+
+            // Draw visitor with special glow
+            const scale = this.getScale();
+            const glowSize = 30 * scale;
+
+            // Glow effect
+            const gradient = this.ctx.createRadialGradient(x, y - 15, 0, x, y - 15, glowSize);
+            gradient.addColorStop(0, 'rgba(255, 215, 0, 0.4)');
+            gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+            this.ctx.fillStyle = gradient;
+            this.ctx.fillRect(x - glowSize, y - 15 - glowSize, glowSize * 2, glowSize * 2);
+
+            // Draw large emoji
+            this.ctx.font = `${20 * scale}px Arial`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'bottom';
+            this.ctx.fillText(visitor.emoji, x, y);
+
+            // Draw name label
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            this.ctx.fillRect(x - 35 * scale, y - 45 * scale, 70 * scale, 14 * scale);
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.font = `bold ${8 * scale}px Arial`;
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(visitor.name, x, y - 38 * scale);
+
+            // Draw thought bubble
+            if (visitor.thoughts && Date.now() % 4000 < 3000) {
+                const thought = visitor.thoughts[Math.floor(Date.now() / 3000) % visitor.thoughts.length];
+                this.drawThoughtBubbleAt(x, y - 55 * scale, thought);
+            }
+
+            // Time remaining indicator
+            const timeLeft = visitor.endTime - Date.now();
+            const progress = timeLeft / (visitor.endTime - visitor.startTime);
+
+            this.ctx.strokeStyle = '#FFD700';
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.arc(x, y - 25 * scale, 12 * scale, -Math.PI / 2, -Math.PI / 2 + (progress * Math.PI * 2));
+            this.ctx.stroke();
+        });
+    }
+
+    /**
+     * Draw a simple thought bubble at specific position
+     */
+    drawThoughtBubbleAt(x, y, text) {
+        const scale = this.getScale();
+        const bubbleWidth = 45 * scale;
+        const bubbleHeight = 16 * scale;
+
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        this.ctx.strokeStyle = '#ccc';
+        this.ctx.lineWidth = 1;
+
+        this.ctx.beginPath();
+        this.ctx.roundRect(x - bubbleWidth/2, y - bubbleHeight, bubbleWidth, bubbleHeight, 4);
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = '#333';
+        this.ctx.font = `${8 * scale}px Arial`;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(text, x, y - bubbleHeight/2);
     }
 
     /**

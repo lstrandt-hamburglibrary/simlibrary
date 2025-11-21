@@ -1687,3 +1687,47 @@ body {
         font-size: 24px;
     }
 }
+
+/* ===================================
+   Toast Notifications
+   =================================== */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* ===================================
+   Mood Meter
+   =================================== */
+
+.mood-stat {
+    min-width: 60px;
+}
+
+.mood-stat .stat-icon {
+    font-size: 16px;
+}
+
+.mood-stat .stat-value {
+    font-size: 12px;
+}
+
+.mood-stat .stat-label {
+    font-size: 9px;
+}

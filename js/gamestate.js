@@ -155,6 +155,66 @@ class GameState {
             }
         ];
 
+        // Special wandering visitors (different from VIP readers)
+        this.specialVisitors = [];
+        this.nextSpecialVisitorTime = Date.now() + 180000; // First visitor in 3 minutes
+        this.specialVisitorTypes = [
+            {
+                id: 'author',
+                name: 'Famous Author',
+                emoji: '✍️',
+                description: 'Doubles income from all floors!',
+                duration: 60000, // 1 minute
+                effect: { type: 'income_multiplier', value: 2 },
+                thoughts: ['📖 Signing!', '✍️ Write', '📚 Ideas', '🌟 Fans!']
+            },
+            {
+                id: 'inspector',
+                name: 'Library Inspector',
+                emoji: '🔍',
+                description: 'Grants bonus stars for tidy floors!',
+                duration: 45000,
+                effect: { type: 'inspection_bonus', value: 50 },
+                thoughts: ['📋 Check', '✅ Good!', '🔍 Inspect', '⭐ Nice!']
+            },
+            {
+                id: 'cat',
+                name: 'Library Cat',
+                emoji: '🐱',
+                description: 'Boosts happiness! Readers stay longer.',
+                duration: 90000, // 1.5 minutes
+                effect: { type: 'happiness_boost', value: 1.5 },
+                thoughts: ['😺 Meow', '💤 Zzz', '🐟 Fish?', '😸 Purr']
+            },
+            {
+                id: 'booktuber',
+                name: 'BookTuber',
+                emoji: '📹',
+                description: 'Attracts extra readers!',
+                duration: 60000,
+                effect: { type: 'reader_magnet', value: 2 },
+                thoughts: ['📹 Live!', '📚 Review', '👍 Like!', '🌟 Sub!']
+            },
+            {
+                id: 'contractor',
+                name: 'Contractor',
+                emoji: '🔨',
+                description: 'Speeds up all construction!',
+                duration: 60000,
+                effect: { type: 'build_speed', value: 2 },
+                thoughts: ['🔨 Build', '📐 Plan', '🏗️ Work', '💪 Done!']
+            }
+        ];
+
+        // Mood/happiness meter (0-100)
+        this.mood = 50;
+        this.moodFactors = {
+            readerServed: 2,      // +2 per reader
+            missionComplete: 10,  // +10 per mission
+            emptyStock: -5,       // -5 per empty floor
+            vipServed: 5          // +5 per VIP
+        };
+
         // Stats tracking (all-time)
         this.stats = {
             totalBooksCheckedOut: 0,
@@ -1372,6 +1432,111 @@ class GameState {
     }
 
     /**
+     * Spawn a special wandering visitor
+     */
+    spawnSpecialVisitor() {
+        if (this.floors.length === 0) return;
+
+        // Pick random visitor type
+        const visitorType = this.specialVisitorTypes[Math.floor(Math.random() * this.specialVisitorTypes.length)];
+
+        const now = Date.now();
+        const visitor = {
+            id: this.generateId(),
+            type: visitorType.id,
+            name: visitorType.name,
+            emoji: visitorType.emoji,
+            description: visitorType.description,
+            effect: visitorType.effect,
+            thoughts: visitorType.thoughts,
+            startTime: now,
+            endTime: now + visitorType.duration,
+            currentFloorIndex: Math.floor(Math.random() * this.floors.length),
+            nextMoveTime: now + 5000,
+            x: 0.5 // Position on floor (0-1)
+        };
+
+        this.specialVisitors.push(visitor);
+
+        // Store notification for UI
+        this._newSpecialVisitor = visitor;
+
+        // Next visitor in 3-6 minutes
+        this.nextSpecialVisitorTime = now + (180000 + Math.random() * 180000);
+    }
+
+    /**
+     * Get active special visitor effect
+     */
+    getSpecialVisitorEffect(effectType) {
+        for (const visitor of this.specialVisitors) {
+            if (visitor.effect.type === effectType) {
+                return visitor.effect.value;
+            }
+        }
+        return 1; // No effect
+    }
+
+    /**
+     * Check if there's an active special visitor of a type
+     */
+    hasSpecialVisitor(visitorId) {
+        return this.specialVisitors.some(v => v.type === visitorId);
+    }
+
+    /**
+     * Update mood meter based on library state
+     */
+    updateMood() {
+        // Calculate target mood based on current state
+        let targetMood = 50; // Base mood
+
+        // Boost for readers present
+        targetMood += this.readers.length * 2;
+
+        // Boost for special visitors
+        targetMood += this.specialVisitors.length * 10;
+
+        // Penalty for empty stock
+        let emptyCategories = 0;
+        this.floors.forEach(floor => {
+            if (floor.status === 'ready') {
+                floor.bookStock.forEach(cat => {
+                    if (cat.currentStock === 0) emptyCategories++;
+                });
+            }
+        });
+        targetMood -= emptyCategories * 2;
+
+        // Boost during events
+        if (this.currentEvent) targetMood += 15;
+
+        // Boost during rush hour
+        if (this.transitSchedule.isRushHour) targetMood += 10;
+
+        // Clamp target
+        targetMood = Math.max(0, Math.min(100, targetMood));
+
+        // Smoothly move current mood toward target
+        if (this.mood < targetMood) {
+            this.mood = Math.min(targetMood, this.mood + 0.5);
+        } else if (this.mood > targetMood) {
+            this.mood = Math.max(targetMood, this.mood - 0.3);
+        }
+    }
+
+    /**
+     * Get mood description
+     */
+    getMoodDescription() {
+        if (this.mood >= 80) return { emoji: '😄', text: 'Thriving!' };
+        if (this.mood >= 60) return { emoji: '😊', text: 'Happy' };
+        if (this.mood >= 40) return { emoji: '😐', text: 'Okay' };
+        if (this.mood >= 20) return { emoji: '😕', text: 'Quiet' };
+        return { emoji: '😟', text: 'Slow' };
+    }
+
+    /**
      * Check and unlock achievements
      */
     checkAchievements() {
@@ -1704,6 +1869,31 @@ class GameState {
             // Next find mission in 2-4 minutes
             this.nextFindMissionTime = now + (120000 + Math.random() * 120000);
         }
+
+        // Spawn special visitor if it's time
+        if (this.specialVisitors.length === 0 && now >= this.nextSpecialVisitorTime) {
+            this.spawnSpecialVisitor();
+        }
+
+        // Update special visitors
+        this.specialVisitors = this.specialVisitors.filter(visitor => {
+            if (now >= visitor.endTime) {
+                // Visitor is leaving
+                this._departingVisitor = visitor;
+                return false;
+            }
+
+            // Update visitor floor position occasionally
+            if (now >= visitor.nextMoveTime) {
+                visitor.currentFloorIndex = Math.floor(Math.random() * this.floors.length);
+                visitor.nextMoveTime = now + 5000 + Math.random() * 10000; // Move every 5-15 seconds
+            }
+
+            return true;
+        });
+
+        // Update mood meter
+        this.updateMood();
 
         // Update time played stat (every tick = 1 second)
         this.stats.timePlayed += 1;
