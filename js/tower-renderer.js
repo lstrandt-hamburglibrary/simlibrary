@@ -79,9 +79,9 @@ class TowerRenderer {
         this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
         this.canvas.addEventListener('mouseleave', (e) => this.handleMouseUp(e));
 
-        // Touch support for mobile
-        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
-        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+        // Touch support for mobile - passive: true allows browser to scroll
+        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
+        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: true });
         this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
 
         // Set cursor style
