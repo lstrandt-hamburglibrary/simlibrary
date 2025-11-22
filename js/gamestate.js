@@ -1280,9 +1280,25 @@ class GameState {
             }
         }
 
+        // Randomly choose elevator (60%) or stairs (40%)
+        const usesElevator = Math.random() < 0.6;
+
         // Checkout time will be set when they arrive on the floor
-        const elevatorTravelTime = 2000 + (floor.floorNumber * 500);
-        let checkoutTime = Date.now() + elevatorTravelTime + browseTime;
+        let checkoutTime;
+        let elevatorState;
+        let elevatorArrivalTime;
+
+        if (usesElevator) {
+            const elevatorTravelTime = 2000 + (floor.floorNumber * 500);
+            checkoutTime = Date.now() + elevatorTravelTime + browseTime;
+            elevatorState = 'waiting';
+            elevatorArrivalTime = Date.now() + elevatorTravelTime;
+        } else {
+            // Stairs - arrive immediately
+            checkoutTime = Date.now() + browseTime;
+            elevatorState = 'arrived';
+            elevatorArrivalTime = Date.now();
+        }
 
         // Create reader
         const reader = {
@@ -1297,8 +1313,9 @@ class GameState {
             vipAbility: vipType ? vipType.ability : null,
             checkoutTime: checkoutTime,
             earningAmount: earningAmount,
-            elevatorState: 'waiting', // waiting, riding, arrived
-            elevatorArrivalTime: Date.now() + 2000 + (floor.floorNumber * 500) // 2s + 0.5s per floor
+            elevatorState: elevatorState,
+            elevatorArrivalTime: elevatorArrivalTime,
+            usedStairs: !usesElevator
         };
 
         // Check if this should be a returning regular customer (30% chance if any exist)
