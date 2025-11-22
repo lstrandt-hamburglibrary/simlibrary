@@ -1802,9 +1802,9 @@ class TowerRenderer {
                 this._touchMoved = true;
             }
 
-            // Update scroll position
+            // Update scroll position (natural scrolling - drag up to scroll up)
             const scrollDeltaY = e.touches[0].clientY - this.dragStartY;
-            this.scrollY = this.dragStartScrollY - scrollDeltaY;
+            this.scrollY = this.dragStartScrollY + scrollDeltaY;
             // Clamp scroll position
             this.scrollY = Math.max(0, Math.min(this.scrollY, this.maxScrollY));
             // Mark that user has scrolled to prevent auto-scroll reset
