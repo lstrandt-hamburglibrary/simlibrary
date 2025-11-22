@@ -1931,8 +1931,8 @@ class TowerRenderer {
         if (this.maxScrollY > 0) {
             e.preventDefault(); // Prevent page scroll when scrolling canvas
 
-            // Only consider it a scroll if moved more than 10px
-            if (deltaX > 10 || deltaY > 10) {
+            // Only consider it a scroll if moved more than 15px (more forgiving for taps)
+            if (deltaX > 15 || deltaY > 15) {
                 this._touchMoved = true;
             }
 
@@ -1945,7 +1945,7 @@ class TowerRenderer {
             this._hasScrolled = true;
         } else {
             // Tower not scrollable, just track if moved for tap detection
-            if (deltaX > 10 || deltaY > 10) {
+            if (deltaX > 15 || deltaY > 15) {
                 this._touchMoved = true;
             }
         }
@@ -1985,8 +1985,8 @@ class TowerRenderer {
                 for (const item of items) {
                     if (!item.found && item._renderBounds) {
                         const b = item._renderBounds;
-                        // Expand hit area by 50% for easier tapping
-                        const padding = b.width * 0.5; // Increased padding for mobile
+                        // Expand hit area significantly for easier tapping on mobile
+                        const padding = Math.max(b.width * 0.75, 20); // At least 20px padding
                         console.log('Checking item bounds:', b, 'click:', clickX, clickY, 'padding:', padding);
                         if (clickX >= b.x - padding && clickX <= b.x + b.width + padding &&
                             clickY >= b.y - padding && clickY <= b.y + b.height + padding) {
