@@ -1032,10 +1032,14 @@ class TowerRenderer {
                 const startOffset = 30 * scale + Math.random() * (100 * scale);
                 const targetOffset = 150 * scale + Math.random() * (this.floorWidth - 200 * scale);
 
+                // Generate style once at creation (so random elements don't flicker)
+                const style = this.generateCharacterStyle(reader);
+
                 char = {
                     readerId: reader.id,
                     readerType: reader.type,
                     readerEmoji: reader.emoji,
+                    style: style, // Store style so it doesn't change
                     floorX: floorX,
                     floorY: floorY,
                     x: floorX + startOffset, // Absolute position (scaled)
@@ -1070,8 +1074,8 @@ class TowerRenderer {
         const baseY = floorY + this.floorHeight - 10; // Bottom of floor (with small padding)
         const charHeight = 40;
 
-        // Get character style based on reader type
-        const style = this.getCharacterStyle(reader);
+        // Use stored style (generated once at creation to prevent flickering)
+        const style = char.style;
 
         // Different animations based on state and reader type
         let legOffset = 0;
@@ -1368,9 +1372,10 @@ class TowerRenderer {
     }
 
     /**
-     * Get character visual style based on reader type
+     * Generate character visual style based on reader type
+     * Called once at character creation to prevent flickering from random values
      */
-    getCharacterStyle(reader) {
+    generateCharacterStyle(reader) {
         const styles = {
             kid: {
                 skinColor: '#FDBCB4',
