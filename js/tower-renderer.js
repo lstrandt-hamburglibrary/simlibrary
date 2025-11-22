@@ -1959,9 +1959,14 @@ class TowerRenderer {
         if (!this._touchMoved) {
             // Use the rect stored at touch start to avoid page scroll mismatch
             const rect = this._touchStartRect || this.canvas.getBoundingClientRect();
-            const clickX = this.dragStartX - rect.left;
+
+            // Scale coordinates if canvas is scaled (high-DPI)
+            const scaleX = this.width / rect.width;
+            const scaleY = this.height / rect.height;
+
+            const clickX = (this.dragStartX - rect.left) * scaleX;
             // Item bounds are stored in scrolled space, so we need to account for scroll
-            const clickY = (this.dragStartY - rect.top) - this.scrollY;
+            const clickY = ((this.dragStartY - rect.top) * scaleY) - this.scrollY;
 
             console.log('Touch tap at:', clickX, clickY, 'scrollY:', this.scrollY);
 
