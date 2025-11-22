@@ -1986,6 +1986,8 @@ class TowerRenderer {
                     this.isReorderMode = true;
                     this.reorderFloor = this._potentialReorderFloor;
                     this._reorderCurrentY = clickY;
+                    // Initialize target to current position
+                    this.reorderTargetIndex = this.game.floors.findIndex(f => f.id === this.reorderFloor.id);
                     this.canvas.style.cursor = 'move';
                     console.log('Reorder mode activated for:', this.reorderFloor.name);
                 }
@@ -2106,6 +2108,8 @@ class TowerRenderer {
                         this.isReorderMode = true;
                         this.reorderFloor = this._potentialReorderFloor;
                         this._reorderCurrentY = touchY;
+                        // Initialize target to current position
+                        this.reorderTargetIndex = this.game.floors.findIndex(f => f.id === this.reorderFloor.id);
                         // Haptic feedback if available
                         if (navigator.vibrate) {
                             navigator.vibrate(50);
