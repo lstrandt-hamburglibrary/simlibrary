@@ -291,6 +291,9 @@ class TowerRenderer {
         this.ctx.fillStyle = '#8BC34A';
         this.ctx.fillRect(0, this.height - 40, this.width, 40);
 
+        // Update characters first (cleanup and animate)
+        this.updateCharacters();
+
         // Draw elevator shaft
         this.drawElevatorShaft();
 
@@ -374,9 +377,6 @@ class TowerRenderer {
             const buildY = this.height - 40 - (floorsReversed.length + 2) * this.floorHeight; // +2 for lobby
             this.drawBuildSlot(this.floorX, buildY);
         }
-
-        // Update and draw characters
-        this.updateCharacters();
 
         // Draw special visitors
         this.drawSpecialVisitors();
@@ -1445,9 +1445,9 @@ class TowerRenderer {
      * Update character positions and animations
      */
     updateCharacters() {
-        // Remove characters for readers that checked out
+        // Remove characters for readers that checked out or are no longer arrived
         this.characters = this.characters.filter(char => {
-            return this.game.readers.some(r => r.id === char.readerId);
+            return this.game.readers.some(r => r.id === char.readerId && r.elevatorState === 'arrived');
         });
 
         // Update positions
