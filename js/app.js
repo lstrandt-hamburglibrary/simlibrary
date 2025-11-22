@@ -1292,22 +1292,38 @@ function renderUpgradesTab(tab) {
  * Render decorations tab
  */
 function renderDecorationsTab(container) {
-    const prestigeInfo = game.getPrestigeInfo();
     const prestigeOrder = ['community', 'town', 'city', 'regional', 'national', 'world'];
     const currentPrestigeIndex = prestigeOrder.indexOf(game.currentPrestige);
+
+    // Get placed decorations
+    const placedInLobby = new Set(game.lobbyDecorations);
+    const placedOnFloors = new Set(Object.values(game.floorDecorations).flat());
 
     game.decorations.forEach(decoration => {
         const owned = game.ownedDecorations.includes(decoration.id);
         const prestigeIndex = prestigeOrder.indexOf(decoration.unlockPrestige);
         const unlocked = prestigeIndex <= currentPrestigeIndex;
         const canAfford = game.stars >= decoration.cost;
+        const isPlaced = placedInLobby.has(decoration.id) || placedOnFloors.has(decoration.id);
 
         const item = document.createElement('div');
         item.className = `upgrade-item ${owned ? 'owned' : ''} ${!unlocked ? 'locked' : ''}`;
 
         let actionHtml = '';
+        let typeLabel = decoration.type === 'lobby' ? '(Lobby)' : '(Floor)';
+
         if (owned) {
-            actionHtml = `<span class="owned-badge">OWNED</span>`;
+            if (isPlaced) {
+                const location = placedInLobby.has(decoration.id) ? 'Lobby' : 'Floor';
+                actionHtml = `<span class="owned-badge">In ${location}</span>`;
+            } else {
+                // Show place button
+                if (decoration.type === 'lobby') {
+                    actionHtml = `<button class="buy-upgrade-btn" data-action="place-lobby" data-id="${decoration.id}">Place</button>`;
+                } else {
+                    actionHtml = `<button class="buy-upgrade-btn" data-action="place-floor" data-id="${decoration.id}">Place</button>`;
+                }
+            }
         } else if (!unlocked) {
             const requiredPrestige = game.prestigeLevels.find(p => p.id === decoration.unlockPrestige);
             actionHtml = `<span class="locked-badge">${requiredPrestige.emoji} Required</span>`;
@@ -1321,7 +1337,7 @@ function renderDecorationsTab(container) {
             <div class="upgrade-icon">${decoration.emoji}</div>
             <div class="upgrade-info">
                 <div class="upgrade-name">${decoration.name}</div>
-                <div class="upgrade-desc">Decorative item for your library</div>
+                <div class="upgrade-desc">${typeLabel} decoration</div>
             </div>
             ${actionHtml}
         `;
@@ -1329,10 +1345,70 @@ function renderDecorationsTab(container) {
         container.appendChild(item);
     });
 
-    // Add event listeners
+    // Add event listeners for buying
     container.querySelectorAll('.buy-upgrade-btn[data-type="decoration"]').forEach(btn => {
         btn.addEventListener('click', () => handlePurchaseDecoration(btn.dataset.id));
     });
+
+    // Add event listeners for placing in lobby
+    container.querySelectorAll('.buy-upgrade-btn[data-action="place-lobby"]').forEach(btn => {
+        btn.addEventListener('click', () => handlePlaceLobbyDecoration(btn.dataset.id));
+    });
+
+    // Add event listeners for placing on floor
+    container.querySelectorAll('.buy-upgrade-btn[data-action="place-floor"]').forEach(btn => {
+        btn.addEventListener('click', () => handlePlaceFloorDecoration(btn.dataset.id));
+    });
+}
+
+/**
+ * Handle placing a decoration in the lobby
+ */
+function handlePlaceLobbyDecoration(decorationId) {
+    const result = game.placeLobbyDecoration(decorationId);
+    if (result.success) {
+        const decoration = game.decorations.find(d => d.id === decorationId);
+        showToast(`${decoration.emoji} placed in lobby!`);
+        renderUpgradesTab('decorations');
+    } else {
+        alert(result.error || 'Cannot place decoration');
+    }
+}
+
+/**
+ * Handle placing a decoration on a floor
+ */
+async function handlePlaceFloorDecoration(decorationId) {
+    const decoration = game.decorations.find(d => d.id === decorationId);
+    if (!decoration) return;
+
+    // Show floor selection
+    if (game.floors.length === 0) {
+        alert('Build a floor first to place decorations!');
+        return;
+    }
+
+    // Create a simple floor picker
+    const floorOptions = game.floors.map(f => `${f.emoji} ${f.name}`).join('\n');
+    const floorIndex = prompt(`Choose a floor (1-${game.floors.length}):\n\n${game.floors.map((f, i) => `${i + 1}. ${f.emoji} ${f.name}`).join('\n')}`);
+
+    if (!floorIndex) return;
+
+    const index = parseInt(floorIndex) - 1;
+    if (isNaN(index) || index < 0 || index >= game.floors.length) {
+        alert('Invalid floor number');
+        return;
+    }
+
+    const floor = game.floors[index];
+    const result = game.placeFloorDecoration(floor.id, decorationId);
+
+    if (result.success) {
+        showToast(`${decoration.emoji} placed on ${floor.name}!`);
+        renderUpgradesTab('decorations');
+    } else {
+        alert(result.error || 'Cannot place decoration');
+    }
 }
 
 /**

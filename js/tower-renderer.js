@@ -238,7 +238,7 @@ class TowerRenderer {
     render() {
         // Calculate max scroll based on tower height
         const floors = [...this.game.floors];
-        const towerHeight = (floors.length + 1) * this.floorHeight + 40; // +1 for build slot, +40 for ground
+        const towerHeight = (floors.length + 2) * this.floorHeight + 40; // +1 for build slot, +1 for lobby, +40 for ground
         const maxScrollY = Math.max(0, towerHeight - this.height);
 
         // Auto-scroll to show top floors by default if tower is taller than canvas
@@ -280,10 +280,14 @@ class TowerRenderer {
         // Draw elevator shaft
         this.drawElevatorShaft();
 
+        // Draw lobby floor at bottom
+        const lobbyY = this.height - 40 - this.floorHeight;
+        this.drawLobby(this.floorX, lobbyY);
+
         // Draw floors (bottom to top) - reuse floors variable from above
         const floorsReversed = floors.reverse();
         floorsReversed.forEach((floor, index) => {
-            const y = this.height - 40 - (index + 1) * this.floorHeight;
+            const y = this.height - 40 - (index + 2) * this.floorHeight; // +2 to account for lobby
             this.drawFloor(floor, this.floorX, y, index);
         });
 
@@ -292,7 +296,7 @@ class TowerRenderer {
 
         // Draw "Build Floor" button at top
         if (this.game.floors.length < this.game.maxFloors) {
-            const buildY = this.height - 40 - (floorsReversed.length + 1) * this.floorHeight;
+            const buildY = this.height - 40 - (floorsReversed.length + 2) * this.floorHeight; // +2 for lobby
             this.drawBuildSlot(this.floorX, buildY);
         }
 
@@ -321,6 +325,94 @@ class TowerRenderer {
 
         // Continue loop
         this.animationFrame = requestAnimationFrame(() => this.render());
+    }
+
+    /**
+     * Draw the lobby floor
+     */
+    drawLobby(x, y) {
+        const colors = {
+            bg: '#F5DEB3', // Tan/beige
+            border: '#D2B48C'
+        };
+
+        // Drop shadow below floor for depth
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        this.ctx.fillRect(x, y + this.floorHeight, this.floorWidth, 8);
+
+        // Gradient for floor depth
+        const gradient = this.ctx.createLinearGradient(x, y, x, y + this.floorHeight);
+        gradient.addColorStop(0, this.lightenColor(colors.bg, 10));
+        gradient.addColorStop(1, colors.bg);
+
+        // Floor background with gradient
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(x, y, this.floorWidth, this.floorHeight);
+
+        // Top highlight for lighting effect
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        this.ctx.fillRect(x, y, this.floorWidth, 3);
+
+        // Floor border
+        this.ctx.strokeStyle = colors.border;
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeRect(x, y, this.floorWidth, this.floorHeight);
+
+        // Draw "LOBBY" text
+        this.ctx.save();
+        this.ctx.fillStyle = '#8B4513';
+        this.ctx.font = 'bold 14px Arial';
+        this.ctx.textAlign = 'left';
+        this.ctx.textBaseline = 'top';
+        this.ctx.fillText('🏛️ Lobby', x + 10, y + 12);
+        this.ctx.restore();
+
+        // Draw welcome desk
+        const deskWidth = 60;
+        const deskHeight = 25;
+        const deskX = x + 20;
+        const deskY = y + this.floorHeight - deskHeight - 10;
+
+        // Desk body
+        this.ctx.fillStyle = '#8B4513';
+        this.ctx.fillRect(deskX, deskY, deskWidth, deskHeight);
+
+        // Desk top
+        this.ctx.fillStyle = '#A0522D';
+        this.ctx.fillRect(deskX - 2, deskY, deskWidth + 4, 5);
+
+        // Draw lobby decorations
+        this.drawLobbyDecorations(x, y);
+    }
+
+    /**
+     * Draw decorations in the lobby
+     */
+    drawLobbyDecorations(x, y) {
+        const decorations = this.game.lobbyDecorations;
+        if (!decorations || decorations.length === 0) return;
+
+        // Position decorations in the lobby
+        const positions = [
+            { x: x + this.floorWidth - 80, y: y + 40 },  // Right side upper
+            { x: x + this.floorWidth - 50, y: y + this.floorHeight - 40 }, // Right side lower
+            { x: x + this.floorWidth / 2, y: y + 50 }, // Center
+        ];
+
+        decorations.forEach((decorId, index) => {
+            const decoration = this.game.decorations.find(d => d.id === decorId);
+            if (!decoration || index >= positions.length) return;
+
+            const pos = positions[index];
+
+            // Draw decoration emoji
+            this.ctx.save();
+            this.ctx.font = '24px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(decoration.emoji, pos.x, pos.y);
+            this.ctx.restore();
+        });
     }
 
     /**
@@ -370,15 +462,15 @@ class TowerRenderer {
      */
     drawElevatorShaft() {
         const numFloors = this.game.floors.length;
-        if (numFloors === 0) return;
 
-        // Shaft should only extend to actual built floors, not the build slot
-        // Top floor is at: height - 40 - (1) * floorHeight
-        // Bottom floor is at: height - 40 - (numFloors) * floorHeight
+        // Shaft always extends from ground to at least the lobby
+        // If there are floors, it extends to the top floor
         // Shaft goes from ground (height - 40) to top of highest floor
-        const topFloorBottom = this.height - 40 - (1) * this.floorHeight;
-        const shaftHeight = (this.height - 40) - topFloorBottom;
-        const shaftY = topFloorBottom;
+        const topY = numFloors === 0
+            ? this.height - 40 - this.floorHeight  // Just lobby
+            : this.height - 40 - (numFloors + 1) * this.floorHeight;  // +1 for lobby
+        const shaftHeight = (this.height - 40) - topY;
+        const shaftY = topY;
 
         // Shaft background with gradient for depth
         const shaftGradient = this.ctx.createLinearGradient(
@@ -406,10 +498,10 @@ class TowerRenderer {
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(this.elevatorX, shaftY, this.elevatorWidth, shaftHeight);
 
-        // Floor markers (horizontal lines)
+        // Floor markers (horizontal lines) - include lobby and all floors
         this.ctx.strokeStyle = '#616161';
         this.ctx.lineWidth = 1;
-        for (let i = 0; i < numFloors; i++) {
+        for (let i = 0; i <= numFloors; i++) {  // <= to include lobby marker
             const markerY = this.height - 40 - (i * this.floorHeight);
             this.ctx.beginPath();
             this.ctx.moveTo(this.elevatorX, markerY);
@@ -438,11 +530,11 @@ class TowerRenderer {
             const visualIndex = floors.findIndex(f => f.id === floor.id);
             if (visualIndex === -1) return;
 
-            // Use EXACT same calculation as floor drawing to ensure alignment
-            const destFloorY = this.height - 40 - (visualIndex + 1) * this.floorHeight;
+            // Use EXACT same calculation as floor drawing to ensure alignment (+2 for lobby)
+            const destFloorY = this.height - 40 - (visualIndex + 2) * this.floorHeight;
 
             // Calculate elevator timing based on visual floor position
-            const floorsToTravel = visualIndex + 1;
+            const floorsToTravel = visualIndex + 2; // +2 for lobby
             const totalTime = 2000 + (floorsToTravel * 500);
             const spawnTime = reader.elevatorArrivalTime - totalTime;
             const elapsed = now - spawnTime;
@@ -549,6 +641,38 @@ class TowerRenderer {
 
         // Draw mini-quest item if on this floor
         this.drawMiniQuestItem(floor, x, y);
+
+        // Draw floor decorations
+        this.drawFloorDecorations(floor, x, y);
+    }
+
+    /**
+     * Draw decorations on a floor
+     */
+    drawFloorDecorations(floor, x, y) {
+        const decorations = this.game.floorDecorations[floor.id];
+        if (!decorations || decorations.length === 0) return;
+
+        // Position decorations on the floor (left and right corners)
+        const positions = [
+            { x: x + 15, y: y + this.floorHeight - 25 },  // Left corner
+            { x: x + this.floorWidth - 15, y: y + this.floorHeight - 25 }, // Right corner
+        ];
+
+        decorations.forEach((decorId, index) => {
+            const decoration = this.game.decorations.find(d => d.id === decorId);
+            if (!decoration || index >= positions.length) return;
+
+            const pos = positions[index];
+
+            // Draw decoration emoji
+            this.ctx.save();
+            this.ctx.font = '16px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(decoration.emoji, pos.x, pos.y);
+            this.ctx.restore();
+        });
     }
 
     /**

@@ -281,16 +281,25 @@ class GameState {
 
         // Unlockable decorations
         this.decorations = [
-            { id: 'plant', name: 'Potted Plant', emoji: '🪴', cost: 500, unlockPrestige: 'community' },
-            { id: 'globe', name: 'Globe', emoji: '🌐', cost: 1000, unlockPrestige: 'town' },
-            { id: 'clock', name: 'Grandfather Clock', emoji: '🕰️', cost: 2000, unlockPrestige: 'town' },
-            { id: 'fountain', name: 'Reading Fountain', emoji: '⛲', cost: 5000, unlockPrestige: 'city' },
-            { id: 'statue', name: 'Book Statue', emoji: '🗿', cost: 10000, unlockPrestige: 'city' },
-            { id: 'chandelier', name: 'Crystal Chandelier', emoji: '💎', cost: 25000, unlockPrestige: 'regional' },
-            { id: 'art', name: 'Famous Painting', emoji: '🖼️', cost: 50000, unlockPrestige: 'regional' },
-            { id: 'garden', name: 'Rooftop Garden', emoji: '🌳', cost: 100000, unlockPrestige: 'national' }
+            // Floor decorations (can place 2 per floor)
+            { id: 'plant', name: 'Potted Plant', emoji: '🪴', cost: 500, unlockPrestige: 'community', type: 'floor' },
+            { id: 'globe', name: 'Globe', emoji: '🌐', cost: 1000, unlockPrestige: 'town', type: 'floor' },
+            { id: 'clock', name: 'Grandfather Clock', emoji: '🕰️', cost: 2000, unlockPrestige: 'town', type: 'floor' },
+            { id: 'art', name: 'Famous Painting', emoji: '🖼️', cost: 3000, unlockPrestige: 'city', type: 'floor' },
+            { id: 'lamp', name: 'Reading Lamp', emoji: '🪔', cost: 1500, unlockPrestige: 'community', type: 'floor' },
+            { id: 'vase', name: 'Flower Vase', emoji: '🌸', cost: 800, unlockPrestige: 'community', type: 'floor' },
+            // Lobby decorations (placed in lobby)
+            { id: 'fountain', name: 'Reading Fountain', emoji: '⛲', cost: 5000, unlockPrestige: 'city', type: 'lobby' },
+            { id: 'statue', name: 'Book Statue', emoji: '🗿', cost: 10000, unlockPrestige: 'city', type: 'lobby' },
+            { id: 'chandelier', name: 'Crystal Chandelier', emoji: '💎', cost: 25000, unlockPrestige: 'regional', type: 'lobby' },
+            { id: 'garden', name: 'Indoor Garden', emoji: '🌳', cost: 15000, unlockPrestige: 'regional', type: 'lobby' },
+            { id: 'aquarium', name: 'Aquarium', emoji: '🐠', cost: 8000, unlockPrestige: 'town', type: 'lobby' }
         ];
         this.ownedDecorations = [];
+
+        // Decoration placements
+        this.lobbyDecorations = []; // Array of decoration IDs placed in lobby
+        this.floorDecorations = {}; // { floorId: [decorId1, decorId2] }
 
         // Floor themes/skins
         this.floorThemes = [
@@ -1976,6 +1985,116 @@ class GameState {
     }
 
     /**
+     * Place a decoration in the lobby
+     */
+    placeLobbyDecoration(decorationId) {
+        const decoration = this.decorations.find(d => d.id === decorationId);
+        if (!decoration) return { success: false, error: 'Invalid decoration' };
+        if (!this.ownedDecorations.includes(decorationId)) {
+            return { success: false, error: 'Decoration not owned' };
+        }
+        if (decoration.type !== 'lobby') {
+            return { success: false, error: 'Not a lobby decoration' };
+        }
+        if (this.lobbyDecorations.includes(decorationId)) {
+            return { success: false, error: 'Already placed in lobby' };
+        }
+
+        // Remove from any floor first
+        for (const floorId in this.floorDecorations) {
+            this.floorDecorations[floorId] = this.floorDecorations[floorId].filter(id => id !== decorationId);
+        }
+
+        this.lobbyDecorations.push(decorationId);
+        this.save();
+        return { success: true };
+    }
+
+    /**
+     * Remove a decoration from the lobby
+     */
+    removeLobbyDecoration(decorationId) {
+        const index = this.lobbyDecorations.indexOf(decorationId);
+        if (index === -1) return { success: false, error: 'Not in lobby' };
+
+        this.lobbyDecorations.splice(index, 1);
+        this.save();
+        return { success: true };
+    }
+
+    /**
+     * Place a decoration on a floor
+     */
+    placeFloorDecoration(floorId, decorationId) {
+        const decoration = this.decorations.find(d => d.id === decorationId);
+        if (!decoration) return { success: false, error: 'Invalid decoration' };
+        if (!this.ownedDecorations.includes(decorationId)) {
+            return { success: false, error: 'Decoration not owned' };
+        }
+        if (decoration.type !== 'floor') {
+            return { success: false, error: 'Not a floor decoration' };
+        }
+
+        const floor = this.getFloor(floorId);
+        if (!floor) return { success: false, error: 'Invalid floor' };
+
+        // Initialize floor decorations array if needed
+        if (!this.floorDecorations[floorId]) {
+            this.floorDecorations[floorId] = [];
+        }
+
+        // Check if already on this floor
+        if (this.floorDecorations[floorId].includes(decorationId)) {
+            return { success: false, error: 'Already on this floor' };
+        }
+
+        // Check limit (2 per floor)
+        if (this.floorDecorations[floorId].length >= 2) {
+            return { success: false, error: 'Floor is full (max 2)' };
+        }
+
+        // Remove from lobby and other floors first
+        this.lobbyDecorations = this.lobbyDecorations.filter(id => id !== decorationId);
+        for (const fId in this.floorDecorations) {
+            if (fId !== floorId) {
+                this.floorDecorations[fId] = this.floorDecorations[fId].filter(id => id !== decorationId);
+            }
+        }
+
+        this.floorDecorations[floorId].push(decorationId);
+        this.save();
+        return { success: true };
+    }
+
+    /**
+     * Remove a decoration from a floor
+     */
+    removeFloorDecoration(floorId, decorationId) {
+        if (!this.floorDecorations[floorId]) {
+            return { success: false, error: 'No decorations on floor' };
+        }
+
+        const index = this.floorDecorations[floorId].indexOf(decorationId);
+        if (index === -1) return { success: false, error: 'Not on this floor' };
+
+        this.floorDecorations[floorId].splice(index, 1);
+        this.save();
+        return { success: true };
+    }
+
+    /**
+     * Get all unplaced decorations
+     */
+    getUnplacedDecorations() {
+        const placedIds = new Set([
+            ...this.lobbyDecorations,
+            ...Object.values(this.floorDecorations).flat()
+        ]);
+
+        return this.ownedDecorations.filter(id => !placedIds.has(id));
+    }
+
+    /**
      * Purchase a floor theme
      */
     purchaseTheme(themeId) {
@@ -2554,6 +2673,8 @@ class GameState {
             readerCollection: this.readerCollection,
             currentPrestige: this.currentPrestige,
             ownedDecorations: this.ownedDecorations,
+            lobbyDecorations: this.lobbyDecorations,
+            floorDecorations: this.floorDecorations,
             unlockedThemes: this.unlockedThemes,
             activeTheme: this.activeTheme,
             unlockedPerks: this.unlockedPerks,
@@ -2628,6 +2749,8 @@ class GameState {
                 // Load progression system data
                 this.currentPrestige = data.currentPrestige || 'community';
                 this.ownedDecorations = data.ownedDecorations || [];
+                this.lobbyDecorations = data.lobbyDecorations || [];
+                this.floorDecorations = data.floorDecorations || {};
                 this.unlockedThemes = data.unlockedThemes || ['classic'];
                 this.activeTheme = data.activeTheme || 'classic';
                 this.unlockedPerks = data.unlockedPerks || [];
