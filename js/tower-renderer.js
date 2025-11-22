@@ -1764,6 +1764,8 @@ class TowerRenderer {
             this.dragStartX = e.touches[0].clientX;
             this.dragStartScrollY = this.scrollY;
             this._touchMoved = false;
+            // Store rect at touch start to avoid page scroll mismatch
+            this._touchStartRect = this.canvas.getBoundingClientRect();
         }
     }
 
@@ -1792,12 +1794,13 @@ class TowerRenderer {
     handleTouchEnd(e) {
         // If we didn't move much, treat it as a tap/click
         if (!this._touchMoved && this.isDragging) {
-            // Create a synthetic click event at the touch position
-            const rect = this.canvas.getBoundingClientRect();
+            // Use the rect stored at touch start to avoid page scroll mismatch
+            const rect = this._touchStartRect || this.canvas.getBoundingClientRect();
             const clickX = this.dragStartX - rect.left;
+            // Item bounds are stored in scrolled space, so we need to account for scroll
             const clickY = (this.dragStartY - rect.top) - this.scrollY;
 
-            console.log('Touch tap at:', clickX, clickY);
+            console.log('Touch tap at:', clickX, clickY, 'scrollY:', this.scrollY);
 
             // Check build slot click first
             if (this._buildSlotBounds) {
@@ -1820,7 +1823,8 @@ class TowerRenderer {
                     if (!item.found && item._renderBounds) {
                         const b = item._renderBounds;
                         // Expand hit area by 50% for easier tapping
-                        const padding = b.width * 0.25;
+                        const padding = b.width * 0.5; // Increased padding for mobile
+                        console.log('Checking item bounds:', b, 'click:', clickX, clickY, 'padding:', padding);
                         if (clickX >= b.x - padding && clickX <= b.x + b.width + padding &&
                             clickY >= b.y - padding && clickY <= b.y + b.height + padding) {
                             console.log('Find item tapped:', item.emoji);
