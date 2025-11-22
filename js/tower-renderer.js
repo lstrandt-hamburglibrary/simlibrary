@@ -720,44 +720,53 @@ class TowerRenderer {
         // Draw floor decorations
         this.drawFloorDecorations(floor, x, y);
 
-        // Draw trash indicator if floor has significant trash
-        if (floor.trash !== undefined && floor.trash > 0) {
-            this.drawTrashIndicator(floor, x, y);
-        }
+        // Draw floor happiness indicator (based on trash level)
+        this.drawFloorHappiness(floor, x, y);
     }
 
     /**
-     * Draw trash indicator on floor
+     * Draw floor happiness indicator in upper right
      */
-    drawTrashIndicator(floor, x, y) {
-        const trashLevel = floor.trash;
+    drawFloorHappiness(floor, x, y) {
+        // Get happiness based on trash (100 - trash = happiness)
+        const happiness = floor.trash !== undefined ? 100 - floor.trash : 100;
 
-        // Only show visual indicator when trash is noticeable
-        if (trashLevel < 20) return;
-
-        // Draw small trash icons based on trash level
-        const numTrash = Math.min(5, Math.floor(trashLevel / 20)); // 1-5 icons
-        const trashEmojis = ['🗑️', '📄', '☕', '🥤', '📦'];
+        // Choose emoji based on happiness level
+        let emoji;
+        if (happiness >= 80) {
+            emoji = '😄'; // Very happy - clean
+        } else if (happiness >= 60) {
+            emoji = '😊'; // Happy - slight trash
+        } else if (happiness >= 40) {
+            emoji = '😐'; // Neutral - moderate trash
+        } else if (happiness >= 20) {
+            emoji = '😟'; // Unhappy - dirty
+        } else {
+            emoji = '🤢'; // Very unhappy - filthy
+        }
 
         this.ctx.save();
-        this.ctx.font = '10px Arial';
+        this.ctx.font = '14px Arial';
+        this.ctx.textAlign = 'right';
+        this.ctx.textBaseline = 'top';
 
-        for (let i = 0; i < numTrash; i++) {
-            const trashX = x + this.floorWidth - 20 - (i * 12);
-            const trashY = y + this.floorHeight - 15;
-            this.ctx.fillText(trashEmojis[i % trashEmojis.length], trashX, trashY);
-        }
-
-        // Show warning color overlay when trash is critical
-        if (trashLevel >= 80) {
-            this.ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
-            this.ctx.fillRect(x, y, this.floorWidth, this.floorHeight);
-        } else if (trashLevel >= 50) {
-            this.ctx.fillStyle = 'rgba(255, 165, 0, 0.1)';
-            this.ctx.fillRect(x, y, this.floorWidth, this.floorHeight);
-        }
+        // Draw emoji in upper right corner
+        const emojiX = x + this.floorWidth - 8;
+        const emojiY = y + 8;
+        this.ctx.fillText(emoji, emojiX, emojiY);
 
         this.ctx.restore();
+
+        // Show warning color overlay when trash is critical
+        if (floor.trash !== undefined) {
+            if (floor.trash >= 80) {
+                this.ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+                this.ctx.fillRect(x, y, this.floorWidth, this.floorHeight);
+            } else if (floor.trash >= 50) {
+                this.ctx.fillStyle = 'rgba(255, 165, 0, 0.1)';
+                this.ctx.fillRect(x, y, this.floorWidth, this.floorHeight);
+            }
+        }
     }
 
     /**
