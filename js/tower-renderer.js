@@ -308,28 +308,41 @@ class TowerRenderer {
                 const actualIndex = this.game.floors.length - 1 - index; // Convert visual index to array index
 
                 // Draw drop indicator at target position
-                if (actualIndex === this.reorderTargetIndex) {
+                if (actualIndex === this.reorderTargetIndex && floor.id !== this.reorderFloor.id) {
                     this.ctx.save();
+
+                    // Bright colored background overlay
+                    this.ctx.fillStyle = 'rgba(76, 175, 80, 0.3)';
+                    this.ctx.fillRect(this.floorX, y, this.floorWidth, this.floorHeight);
+
+                    // Thick bright border
                     this.ctx.strokeStyle = '#4CAF50';
-                    this.ctx.lineWidth = 4;
-                    this.ctx.setLineDash([10, 5]);
-                    this.ctx.strokeRect(this.floorX - 2, y - 2, this.floorWidth + 4, this.floorHeight + 4);
+                    this.ctx.lineWidth = 6;
+                    this.ctx.strokeRect(this.floorX, y, this.floorWidth, this.floorHeight);
+
+                    // Floor number label
+                    const targetFloorNum = this.reorderTargetIndex + 1;
+                    this.ctx.fillStyle = '#4CAF50';
+                    this.ctx.font = `bold ${24 * this.getScale()}px Arial`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(`→ Floor ${targetFloorNum}`, this.floorX + this.floorWidth / 2, y + this.floorHeight / 2 + 8);
+
                     this.ctx.restore();
                 }
 
                 // Draw the dragged floor with highlight/opacity
                 if (floor.id === this.reorderFloor.id) {
                     this.ctx.save();
-                    this.ctx.globalAlpha = 0.5;
+                    this.ctx.globalAlpha = 0.3;
                     this.drawFloor(floor, this.floorX, y, index);
                     this.ctx.restore();
 
                     // Draw floating version at cursor position
                     this.ctx.save();
                     const dragY = this._reorderCurrentY - this.floorHeight / 2;
-                    this.ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-                    this.ctx.shadowBlur = 20;
-                    this.ctx.shadowOffsetY = 10;
+                    this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                    this.ctx.shadowBlur = 25;
+                    this.ctx.shadowOffsetY = 15;
                     this.drawFloor(floor, this.floorX, dragY, index);
                     this.ctx.restore();
                     return;
