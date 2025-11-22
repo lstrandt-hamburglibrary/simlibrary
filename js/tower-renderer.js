@@ -1776,6 +1776,11 @@ class TowerRenderer {
             this._touchMoved = false;
             // Store rect at touch start to avoid page scroll mismatch
             this._touchStartRect = this.canvas.getBoundingClientRect();
+
+            // Prevent default if tower is scrollable to capture the gesture
+            if (this.maxScrollY > 0) {
+                e.preventDefault();
+            }
         }
     }
 
@@ -1787,6 +1792,8 @@ class TowerRenderer {
 
         const deltaX = Math.abs(e.touches[0].clientX - this.dragStartX);
         const deltaY = Math.abs(e.touches[0].clientY - this.dragStartY);
+
+        console.log('Touch move - maxScrollY:', this.maxScrollY, 'height:', this.height, 'floorHeight:', this.floorHeight, 'floors:', this.game.floors.length);
 
         // If tower is scrollable, prevent page scroll and handle internally
         if (this.maxScrollY > 0) {
