@@ -405,9 +405,9 @@ class TowerRenderer {
 
             const pos = positions[index];
 
-            // Draw decoration emoji
+            // Draw decoration emoji (3x larger)
             this.ctx.save();
-            this.ctx.font = '24px Arial';
+            this.ctx.font = '72px Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText(decoration.emoji, pos.x, pos.y);
@@ -665,9 +665,9 @@ class TowerRenderer {
 
             const pos = positions[index];
 
-            // Draw decoration emoji
+            // Draw decoration emoji (3x larger)
             this.ctx.save();
-            this.ctx.font = '16px Arial';
+            this.ctx.font = '48px Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText(decoration.emoji, pos.x, pos.y);
