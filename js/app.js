@@ -86,14 +86,14 @@ function init() {
                     const y = bounds.y + bounds.height / 2;
 
                     // Spawn star particles
-                    renderer.spawnStarParticles(x, y, checkout.stars);
+                    towerRenderer.spawnStarParticles(x, y, checkout.stars);
 
                     // Spawn floating text
-                    renderer.spawnTextParticle(x, y - 20, `+${checkout.stars} ⭐`, '#FFD700');
+                    towerRenderer.spawnTextParticle(x, y - 20, `+${checkout.stars} ⭐`, '#FFD700');
 
                     // Extra sparkles for VIPs
                     if (checkout.isVIP) {
-                        renderer.spawnSparkle(x, y);
+                        towerRenderer.spawnSparkle(x, y);
                     }
                 }
             });
@@ -108,7 +108,7 @@ function init() {
                     const bounds = floor._renderBounds;
                     const x = bounds.x - 40; // Elevator position
                     const y = bounds.y + bounds.height / 2;
-                    renderer.spawnSparkle(x, y);
+                    towerRenderer.spawnSparkle(x, y);
                 }
             });
             game._recentArrivals = [];
