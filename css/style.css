@@ -1742,7 +1742,8 @@ body {
 }
 
 .stat.compact .stat-label {
-    display: none;
+    font-size: 10px;
+    margin-right: 2px;
 }
 
 .mood-stat {
