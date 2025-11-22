@@ -40,11 +40,6 @@ class TowerRenderer {
         this.clouds = [];
         this.initClouds();
 
-        // Sprite images
-        this.sprites = {};
-        this.spritesLoaded = false;
-        this.loadSprites();
-
         // Scrolling
         this.scrollY = 0; // Current scroll offset
         this.maxScrollY = 0; // Maximum scroll (calculated based on tower height)
@@ -228,46 +223,6 @@ class TowerRenderer {
                 opacity: 0.3 + Math.random() * 0.4
             });
         }
-    }
-
-    /**
-     * Load sprite images
-     */
-    loadSprites() {
-        const spriteFiles = {
-            bookshelf1: 'assets/TX_BookShelf.png',
-            bookshelf2: 'assets/TX_BookShelf_02.png'
-        };
-
-        let loadedCount = 0;
-        const totalSprites = Object.keys(spriteFiles).length;
-
-        for (const [name, src] of Object.entries(spriteFiles)) {
-            const img = new Image();
-            img.onload = () => {
-                loadedCount++;
-                if (loadedCount === totalSprites) {
-                    this.spritesLoaded = true;
-                }
-            };
-            img.src = src;
-            this.sprites[name] = img;
-        }
-
-        // Define sprite regions for each bookshelf color (from sprite sheet)
-        // Each sprite sheet is 256x256 with individual shelves
-        this.bookshelfRegions = {
-            // TX_BookShelf.png colors (row 1: teal, red, blue, dark blue, brown, dark brown)
-            teal: { sheet: 'bookshelf1', x: 0, y: 0, w: 32, h: 32 },
-            red: { sheet: 'bookshelf1', x: 32, y: 0, w: 32, h: 32 },
-            blue: { sheet: 'bookshelf1', x: 64, y: 0, w: 32, h: 32 },
-            darkblue: { sheet: 'bookshelf1', x: 96, y: 0, w: 32, h: 32 },
-            brown: { sheet: 'bookshelf1', x: 128, y: 0, w: 32, h: 32 },
-            darkbrown: { sheet: 'bookshelf1', x: 160, y: 0, w: 32, h: 32 },
-            // TX_BookShelf_02.png colors (row 1: teal, purple, dark purple, brown variants)
-            purple: { sheet: 'bookshelf2', x: 64, y: 0, w: 32, h: 32 },
-            green: { sheet: 'bookshelf2', x: 0, y: 0, w: 32, h: 32 }
-        };
     }
 
     /**
@@ -929,12 +884,6 @@ class TowerRenderer {
         // Determine shelf style and book colors based on floor type
         const shelfStyles = this.getShelfStyle(floorType);
 
-        // Try to use sprite if available
-        if (this.spritesLoaded && this.bookshelfRegions) {
-            const spriteDrawn = this.drawBookshelfSprite(category, x, y, width, height, floorType, scale);
-            if (spriteDrawn) return;
-        }
-
         // Draw shelf with custom shape based on style
         this.ctx.fillStyle = shelfStyles.shelfColor;
         this.ctx.strokeStyle = shelfStyles.borderColor;
@@ -1065,78 +1014,6 @@ class TowerRenderer {
             this.ctx.font = `bold ${Math.round(12 * scale)}px Arial`;
             this.ctx.fillText('📦 Restocking', x + width / 2, y + height / 2);
         }
-    }
-
-    /**
-     * Draw bookshelf using sprite image
-     */
-    drawBookshelfSprite(category, x, y, width, height, floorType, scale) {
-        // Map floor types to sprite colors
-        const floorToSprite = {
-            'board_books': 'red',
-            'picture_books': 'red',
-            'early_readers': 'green',
-            'juvenile_series': 'blue',
-            'teen': 'purple',
-            'fiction': 'brown',
-            'mystery': 'purple',
-            'romance': 'red',
-            'scifi': 'blue',
-            'fantasy': 'purple',
-            'biography': 'brown',
-            'graphic_novels': 'blue',
-            'history': 'brown',
-            'local_history': 'brown',
-            'science': 'teal',
-            'technology': 'teal',
-            'sports': 'green',
-            'cooking': 'red',
-            'games': 'blue'
-        };
-
-        const spriteColor = floorToSprite[floorType] || 'brown';
-        const region = this.bookshelfRegions[spriteColor];
-
-        if (!region) return false;
-
-        const sprite = this.sprites[region.sheet];
-        if (!sprite || !sprite.complete) return false;
-
-        // Draw the sprite scaled to fit
-        this.ctx.drawImage(
-            sprite,
-            region.x, region.y, region.w, region.h,  // Source rectangle
-            x, y, width, height  // Destination rectangle
-        );
-
-        // Draw stock indicator on top
-        const stockPercent = category.currentStock / category.maxStock;
-
-        // Stock bar background
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        this.ctx.fillRect(x, y + height - 12 * scale, width, 12 * scale);
-
-        // Stock bar fill
-        this.ctx.fillStyle = stockPercent > 0.5 ? '#4CAF50' : stockPercent > 0.2 ? '#FF9800' : '#F44336';
-        this.ctx.fillRect(x + 2 * scale, y + height - 10 * scale, (width - 4 * scale) * stockPercent, 8 * scale);
-
-        // Stock text
-        this.ctx.fillStyle = '#FFF';
-        this.ctx.font = `bold ${Math.round(9 * scale)}px Arial`;
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText(`${category.currentStock}/${category.maxStock}`, x + width / 2, y + height - 3 * scale);
-
-        // Restocking indicator
-        if (category.restocking) {
-            this.ctx.fillStyle = 'rgba(255, 152, 0, 0.7)';
-            this.ctx.fillRect(x, y, width, height);
-
-            this.ctx.fillStyle = '#FFF';
-            this.ctx.font = `bold ${Math.round(10 * scale)}px Arial`;
-            this.ctx.fillText('📦', x + width / 2, y + height / 2);
-        }
-
-        return true;
     }
 
     /**
