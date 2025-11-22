@@ -1733,7 +1733,16 @@ class GameState {
 
                     // Apply event star multiplier
                     const starMultiplier = this.getEventEffect('star_multiplier');
-                    const finalEarnings = Math.floor(reader.earningAmount * starMultiplier);
+                    let finalEarnings = Math.floor(reader.earningAmount * starMultiplier);
+
+                    // Apply mood bonus (high mood = bonus stars)
+                    if (this.mood >= 70) {
+                        const moodBonus = Math.floor(finalEarnings * 0.25); // 25% bonus
+                        finalEarnings += moodBonus;
+                    } else if (this.mood < 30) {
+                        // Low mood = reduced earnings
+                        finalEarnings = Math.floor(finalEarnings * 0.75); // 25% penalty
+                    }
 
                     // Earn stars
                     this.stars += finalEarnings;
@@ -1745,6 +1754,13 @@ class GameState {
                     if (this.shouldAwardBonusBucks() && Math.random() < 0.2) { // 20% chance
                         this.towerBucks += 1;
                         this.stats.totalTowerBucksEarned += 1;
+                    }
+
+                    // High mood can trigger tips
+                    if (this.mood >= 80 && Math.random() < 0.05) { // 5% chance when very happy
+                        this.towerBucks += 1;
+                        this.stats.totalTowerBucksEarned += 1;
+                        this._moodTip = true; // Flag for UI notification
                     }
 
                     // Track checkout for particle effects
@@ -1828,6 +1844,13 @@ class GameState {
 
         // Apply event spawn rate multiplier
         spawnChance *= this.getEventEffect('spawn_rate');
+
+        // Apply mood effect on spawn rate
+        if (this.mood >= 70) {
+            spawnChance *= 1.25; // 25% more visitors when happy
+        } else if (this.mood < 30) {
+            spawnChance *= 0.5; // 50% fewer visitors when sad
+        }
 
         if (Math.random() < spawnChance) {
             this.spawnReader();

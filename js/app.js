@@ -315,6 +315,12 @@ function updateGlobalStats() {
         showToast(`${game._departingVisitor.emoji} ${game._departingVisitor.name} left the library.`);
         delete game._departingVisitor;
     }
+
+    // Check for mood tips
+    if (game._moodTip) {
+        showToast(`💎 Happy patron left a tip!`);
+        delete game._moodTip;
+    }
 }
 
 /**
