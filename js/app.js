@@ -739,39 +739,79 @@ function renderStaffSlots(floor) {
         return;
     }
 
+    // Check if this floor type has custom staff slots (like basement)
+    const floorType = game.floorTypes.find(ft => ft.id === floor.typeId);
+    const hasCustomStaff = floorType && floorType.staffSlots;
+
     // Create 3 staff slots
     for (let i = 0; i < 3; i++) {
         const staff = floor.staff[i];
-        const staffType = game.staffTypes[i];
         const categoryName = floor.bookStock[i]?.name || '';
 
         const slot = document.createElement('div');
         slot.className = 'staff-slot';
 
-        if (staff) {
-            // Filled slot
-            slot.innerHTML = `
-                <div class="staff-icon" style="background-color: ${staff.color}">${staff.emoji}</div>
-                <div class="staff-info">
-                    <div class="staff-name">${staff.name}</div>
-                    <div class="staff-unlock">✅ "${categoryName}" unlocked</div>
-                </div>
-            `;
+        if (hasCustomStaff) {
+            // Custom staff for utility rooms (basement)
+            const customStaff = floorType.staffSlots[i];
+            const isHired = floor.staff.includes(customStaff.name);
+
+            if (isHired) {
+                // Filled slot
+                slot.innerHTML = `
+                    <div class="staff-icon" style="background-color: ${customStaff.color}">${customStaff.emoji}</div>
+                    <div class="staff-info">
+                        <div class="staff-name">${customStaff.name}</div>
+                        <div class="staff-unlock">✅ ${customStaff.effect}</div>
+                    </div>
+                `;
+            } else {
+                // Empty slot with hire button
+                const canAfford = game.stars >= customStaff.cost;
+                slot.innerHTML = `
+                    <div class="staff-icon empty">?</div>
+                    <div class="staff-info">
+                        <div class="staff-name">${customStaff.name}</div>
+                        <div class="staff-description">${customStaff.effect}</div>
+                    </div>
+                    <button class="hire-staff-btn ${!canAfford ? 'disabled' : ''}"
+                            data-floor-id="${floor.id}"
+                            data-staff-index="${i}"
+                            ${!canAfford ? 'disabled' : ''}>
+                        Hire (${customStaff.cost} ⭐)
+                    </button>
+                `;
+            }
         } else {
-            // Empty slot with hire button
-            const canAfford = game.stars >= staffType.hireCost;
-            slot.innerHTML = `
-                <div class="staff-icon empty">?</div>
-                <div class="staff-info">
-                    <div class="staff-name">Empty Slot ${i + 1}</div>
-                    <div class="staff-description">${staffType.description}</div>
-                </div>
-                <button class="hire-staff-btn ${!canAfford ? 'disabled' : ''}"
-                        data-floor-id="${floor.id}"
-                        ${!canAfford ? 'disabled' : ''}>
-                    Hire ${staffType.name} (${staffType.hireCost} ⭐)
-                </button>
-            `;
+            // Standard staff for regular floors
+            const staffType = game.staffTypes[i];
+
+            if (staff) {
+                // Filled slot
+                slot.innerHTML = `
+                    <div class="staff-icon" style="background-color: ${staff.color}">${staff.emoji}</div>
+                    <div class="staff-info">
+                        <div class="staff-name">${staff.name}</div>
+                        <div class="staff-unlock">✅ "${categoryName}" unlocked</div>
+                    </div>
+                `;
+            } else {
+                // Empty slot with hire button
+                const canAfford = game.stars >= staffType.hireCost;
+                slot.innerHTML = `
+                    <div class="staff-icon empty">?</div>
+                    <div class="staff-info">
+                        <div class="staff-name">Empty Slot ${i + 1}</div>
+                        <div class="staff-description">${staffType.description}</div>
+                    </div>
+                    <button class="hire-staff-btn ${!canAfford ? 'disabled' : ''}"
+                            data-floor-id="${floor.id}"
+                            data-staff-index="${i}"
+                            ${!canAfford ? 'disabled' : ''}>
+                        Hire ${staffType.name} (${staffType.hireCost} ⭐)
+                    </button>
+                `;
+            }
         }
 
         container.appendChild(slot);
@@ -781,7 +821,8 @@ function renderStaffSlots(floor) {
     container.querySelectorAll('.hire-staff-btn:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', () => {
             const floorId = btn.dataset.floorId;
-            handleHireStaff(floorId);
+            const staffIndex = parseInt(btn.dataset.staffIndex);
+            handleHireStaff(floorId, staffIndex);
         });
     });
 }
@@ -789,21 +830,35 @@ function renderStaffSlots(floor) {
 /**
  * Handle hiring staff
  */
-async function handleHireStaff(floorId) {
+async function handleHireStaff(floorId, staffIndex) {
     const floor = game.getFloor(floorId);
     if (!floor) return;
 
-    const staffType = game.staffTypes[floor.staff.length];
-    if (!staffType) return;
+    // Check if this floor type has custom staff
+    const floorType = game.floorTypes.find(ft => ft.id === floor.typeId);
+    const hasCustomStaff = floorType && floorType.staffSlots;
+
+    let staffName, staffCost;
+
+    if (hasCustomStaff) {
+        const customStaff = floorType.staffSlots[staffIndex];
+        staffName = customStaff.name;
+        staffCost = customStaff.cost;
+    } else {
+        const staffType = game.staffTypes[floor.staff.length];
+        if (!staffType) return;
+        staffName = staffType.name;
+        staffCost = staffType.hireCost;
+    }
 
     const confirmed = await showConfirm(
         'Hire Staff',
-        `Hire ${staffType.name} for ${staffType.hireCost} ⭐?`
+        `Hire ${staffName} for ${staffCost} ⭐?`
     );
 
     if (!confirmed) return;
 
-    const result = game.hireStaff(floorId);
+    const result = game.hireStaff(floorId, hasCustomStaff ? staffIndex : undefined);
     if (result.success) {
         renderStaffSlots(floor);
         renderBookCategories(floor);

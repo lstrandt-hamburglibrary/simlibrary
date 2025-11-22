@@ -1127,9 +1127,9 @@ class GameState {
                 },
                 bookCategories: [],
                 staffSlots: [
-                    { name: 'Janitor', cost: 100, effect: 'Cleans 20 trash per night cycle' },
-                    { name: 'Custodian', cost: 200, effect: 'Cleans 40 trash per night cycle' },
-                    { name: 'Cleaning Crew', cost: 350, effect: 'Cleans all trash per night cycle' }
+                    { name: 'Custodian', cost: 100, emoji: '🧹', color: '#8D6E63', effect: 'Cleans 30 trash per night cycle' },
+                    { name: 'Plumber', cost: 200, emoji: '🔧', color: '#5C6BC0', effect: 'Keeps bathrooms running smoothly' },
+                    { name: 'Electrician', cost: 300, emoji: '⚡', color: '#FFA000', effect: 'Maintains lighting and power' }
                 ]
             }
         ];
@@ -1229,12 +1229,48 @@ class GameState {
      * 2nd hire (Clerk) unlocks category 1
      * 3rd hire (Librarian) unlocks category 2
      */
-    hireStaff(floorId) {
+    hireStaff(floorId, customStaffIndex) {
         const floor = this.getFloor(floorId);
         if (!floor || floor.status !== 'ready') {
             return { success: false, error: 'Floor not ready' };
         }
 
+        // Check if this floor type has custom staff
+        const floorType = this.floorTypes.find(ft => ft.id === floor.typeId);
+        const hasCustomStaff = floorType && floorType.staffSlots;
+
+        if (hasCustomStaff) {
+            // Custom staff for utility rooms (basement)
+            const customStaff = floorType.staffSlots[customStaffIndex];
+            if (!customStaff) {
+                return { success: false, error: 'Invalid staff slot' };
+            }
+
+            // Check if already hired
+            if (floor.staff.includes(customStaff.name)) {
+                return { success: false, error: 'Already hired' };
+            }
+
+            // Check cost
+            if (this.stars < customStaff.cost) {
+                return { success: false, error: 'Not enough stars' };
+            }
+
+            // Deduct cost
+            this.stars -= customStaff.cost;
+
+            // Add staff name to floor
+            floor.staff.push(customStaff.name);
+
+            // Update stats
+            this.stats.totalStaffHired += 1;
+
+            this.save();
+
+            return { success: true, staff: customStaff };
+        }
+
+        // Standard staff for regular floors
         // Check if floor already has 3 staff
         if (floor.staff.length >= 3) {
             return { success: false, error: 'Floor is fully staffed' };
@@ -2188,11 +2224,9 @@ class GameState {
 
         let power = 0;
         basement.staff.forEach(staffMember => {
-            if (staffMember === 'Janitor') power = Math.max(power, 20);
-            if (staffMember === 'Custodian') power = Math.max(power, 40);
-            if (staffMember === 'Cleaning Crew') power = 999; // Cleans all
+            if (staffMember === 'Custodian') power += 30; // Each custodian adds cleaning power
         });
-        return power;
+        return power > 0 ? power : 0;
     }
 
     /**
