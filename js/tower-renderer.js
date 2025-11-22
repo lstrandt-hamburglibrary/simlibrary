@@ -516,7 +516,7 @@ class TowerRenderer {
         this.ctx.font = 'bold 14px Arial';
         this.ctx.textAlign = 'left';
         this.ctx.textBaseline = 'top';
-        this.ctx.fillText(`${floor.emoji} ${floor.name}`, x + 10, y + 5);
+        this.ctx.fillText(`${floor.emoji} ${floor.name}`, x + 10, y + 12);
         this.ctx.restore();
 
         // Check if this is a special room
