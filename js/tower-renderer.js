@@ -16,7 +16,7 @@ class TowerRenderer {
         this.canvas.height = this.height;
 
         // Floor dimensions
-        this.floorHeight = 120;
+        this.floorHeight = 140;
         this.floorWidth = 500;
         this.floorX = 50;
 
@@ -112,7 +112,7 @@ class TowerRenderer {
             this.scale = displayWidth / 600;
             this.floorWidth = 500 * this.scale;
             this.floorX = 50 * this.scale;
-            this.floorHeight = 120 * this.scale;
+            this.floorHeight = 140 * this.scale;
             this.elevatorWidth = 40 * this.scale;
             this.elevatorX = 5 * this.scale;
             this.elevatorCarHeight = 80 * this.scale;
