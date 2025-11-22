@@ -1815,6 +1815,8 @@ class TowerRenderer {
             this.scrollY = this.dragStartScrollY - scrollDeltaY;
             // Clamp scroll position
             this.scrollY = Math.max(0, Math.min(this.scrollY, this.maxScrollY));
+            // Mark that user has scrolled to prevent auto-scroll reset
+            this._hasScrolled = true;
         } else {
             // Tower not scrollable, just track if moved for tap detection
             if (deltaX > 10 || deltaY > 10) {
