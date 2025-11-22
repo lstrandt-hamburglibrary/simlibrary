@@ -268,6 +268,65 @@ class GameState {
         ];
         this.activeSynergies = []; // Currently active synergies
 
+        // Library Prestige Levels
+        this.prestigeLevels = [
+            { id: 'community', name: 'Community Library', emoji: '🏠', minFloors: 0, minStarsEarned: 0 },
+            { id: 'town', name: 'Town Library', emoji: '🏘️', minFloors: 3, minStarsEarned: 5000 },
+            { id: 'city', name: 'City Library', emoji: '🏙️', minFloors: 6, minStarsEarned: 20000 },
+            { id: 'regional', name: 'Regional Library', emoji: '🌆', minFloors: 10, minStarsEarned: 50000 },
+            { id: 'national', name: 'National Library', emoji: '🏛️', minFloors: 15, minStarsEarned: 150000 },
+            { id: 'world', name: 'World Library', emoji: '🌍', minFloors: 20, minStarsEarned: 500000 }
+        ];
+        this.currentPrestige = 'community';
+
+        // Unlockable decorations
+        this.decorations = [
+            { id: 'plant', name: 'Potted Plant', emoji: '🪴', cost: 500, unlockPrestige: 'community' },
+            { id: 'globe', name: 'Globe', emoji: '🌐', cost: 1000, unlockPrestige: 'town' },
+            { id: 'clock', name: 'Grandfather Clock', emoji: '🕰️', cost: 2000, unlockPrestige: 'town' },
+            { id: 'fountain', name: 'Reading Fountain', emoji: '⛲', cost: 5000, unlockPrestige: 'city' },
+            { id: 'statue', name: 'Book Statue', emoji: '🗿', cost: 10000, unlockPrestige: 'city' },
+            { id: 'chandelier', name: 'Crystal Chandelier', emoji: '💎', cost: 25000, unlockPrestige: 'regional' },
+            { id: 'art', name: 'Famous Painting', emoji: '🖼️', cost: 50000, unlockPrestige: 'regional' },
+            { id: 'garden', name: 'Rooftop Garden', emoji: '🌳', cost: 100000, unlockPrestige: 'national' }
+        ];
+        this.ownedDecorations = [];
+
+        // Floor themes/skins
+        this.floorThemes = [
+            { id: 'classic', name: 'Classic', emoji: '📚', cost: 0, unlockPrestige: 'community' },
+            { id: 'modern', name: 'Modern', emoji: '🔲', cost: 2000, unlockPrestige: 'town' },
+            { id: 'cozy', name: 'Cozy', emoji: '🛋️', cost: 5000, unlockPrestige: 'city' },
+            { id: 'elegant', name: 'Elegant', emoji: '✨', cost: 15000, unlockPrestige: 'regional' },
+            { id: 'futuristic', name: 'Futuristic', emoji: '🚀', cost: 50000, unlockPrestige: 'national' }
+        ];
+        this.unlockedThemes = ['classic'];
+        this.activeTheme = 'classic';
+
+        // Reader perks (permanent bonuses)
+        this.readerPerks = [
+            { id: 'kid_magnet', name: 'Kid Magnet', emoji: '🧸', description: '+20% kid visitors', cost: 3000, effect: { type: 'spawn_bonus', readerType: 'kid', value: 1.2 } },
+            { id: 'student_discount', name: 'Student Friendly', emoji: '🎒', description: '+20% student visitors', cost: 3000, effect: { type: 'spawn_bonus', readerType: 'student', value: 1.2 } },
+            { id: 'senior_comfort', name: 'Senior Comfort', emoji: '🪑', description: '+20% senior visitors', cost: 3000, effect: { type: 'spawn_bonus', readerType: 'senior', value: 1.2 } },
+            { id: 'vip_lounge', name: 'VIP Lounge', emoji: '⭐', description: '+50% VIP spawn chance', cost: 10000, effect: { type: 'vip_bonus', value: 1.5 } },
+            { id: 'speed_service', name: 'Speed Service', emoji: '⚡', description: '-20% checkout time', cost: 8000, effect: { type: 'checkout_speed', value: 0.8 } },
+            { id: 'generous_tips', name: 'Tip Jar', emoji: '💰', description: '+15% star earnings', cost: 15000, effect: { type: 'earning_bonus', value: 1.15 } }
+        ];
+        this.unlockedPerks = [];
+
+        // Staff upgrades
+        this.staffUpgrades = [
+            { id: 'training_1', name: 'Basic Training', emoji: '📋', description: 'Staff work 10% faster', cost: 2000, level: 1, effect: { type: 'staff_speed', value: 1.1 } },
+            { id: 'training_2', name: 'Advanced Training', emoji: '📊', description: 'Staff work 20% faster', cost: 5000, level: 2, effect: { type: 'staff_speed', value: 1.2 } },
+            { id: 'training_3', name: 'Expert Training', emoji: '🏆', description: 'Staff work 30% faster', cost: 15000, level: 3, effect: { type: 'staff_speed', value: 1.3 } },
+            { id: 'morale_1', name: 'Break Room', emoji: '☕', description: '+5 mood per checkout', cost: 3000, level: 1, effect: { type: 'mood_bonus', value: 5 } },
+            { id: 'morale_2', name: 'Staff Lounge', emoji: '🛋️', description: '+10 mood per checkout', cost: 8000, level: 2, effect: { type: 'mood_bonus', value: 10 } }
+        ];
+        this.purchasedUpgrades = [];
+
+        // Total stars earned (for prestige tracking)
+        this.totalStarsEarned = 0;
+
         // Cozy micro-events (quick, fun surprises)
         this.cozyEvents = [
             {
@@ -1850,6 +1909,193 @@ class GameState {
     }
 
     /**
+     * Check and update prestige level
+     */
+    checkPrestige() {
+        const floors = this.floors.length;
+        const earned = this.totalStarsEarned;
+
+        let newPrestige = 'community';
+        for (const level of this.prestigeLevels) {
+            if (floors >= level.minFloors && earned >= level.minStarsEarned) {
+                newPrestige = level.id;
+            }
+        }
+
+        if (newPrestige !== this.currentPrestige) {
+            const oldLevel = this.prestigeLevels.find(l => l.id === this.currentPrestige);
+            const newLevel = this.prestigeLevels.find(l => l.id === newPrestige);
+            this.currentPrestige = newPrestige;
+            this._prestigeUpgrade = { from: oldLevel, to: newLevel };
+            this.save();
+        }
+    }
+
+    /**
+     * Get current prestige info
+     */
+    getPrestigeInfo() {
+        const current = this.prestigeLevels.find(l => l.id === this.currentPrestige);
+        const currentIndex = this.prestigeLevels.findIndex(l => l.id === this.currentPrestige);
+        const next = this.prestigeLevels[currentIndex + 1] || null;
+
+        return {
+            current,
+            next,
+            floorsProgress: next ? this.floors.length / next.minFloors : 1,
+            starsProgress: next ? this.totalStarsEarned / next.minStarsEarned : 1
+        };
+    }
+
+    /**
+     * Purchase a decoration
+     */
+    purchaseDecoration(decorationId) {
+        const decoration = this.decorations.find(d => d.id === decorationId);
+        if (!decoration) return { success: false, error: 'Invalid decoration' };
+
+        if (this.ownedDecorations.includes(decorationId)) {
+            return { success: false, error: 'Already owned' };
+        }
+
+        // Check prestige requirement
+        const prestigeIndex = this.prestigeLevels.findIndex(l => l.id === decoration.unlockPrestige);
+        const currentIndex = this.prestigeLevels.findIndex(l => l.id === this.currentPrestige);
+        if (currentIndex < prestigeIndex) {
+            return { success: false, error: 'Prestige too low' };
+        }
+
+        if (this.stars < decoration.cost) {
+            return { success: false, error: 'Not enough stars' };
+        }
+
+        this.stars -= decoration.cost;
+        this.ownedDecorations.push(decorationId);
+        this.save();
+        return { success: true };
+    }
+
+    /**
+     * Purchase a floor theme
+     */
+    purchaseTheme(themeId) {
+        const theme = this.floorThemes.find(t => t.id === themeId);
+        if (!theme) return { success: false, error: 'Invalid theme' };
+
+        if (this.unlockedThemes.includes(themeId)) {
+            return { success: false, error: 'Already owned' };
+        }
+
+        // Check prestige requirement
+        const prestigeIndex = this.prestigeLevels.findIndex(l => l.id === theme.unlockPrestige);
+        const currentIndex = this.prestigeLevels.findIndex(l => l.id === this.currentPrestige);
+        if (currentIndex < prestigeIndex) {
+            return { success: false, error: 'Prestige too low' };
+        }
+
+        if (this.stars < theme.cost) {
+            return { success: false, error: 'Not enough stars' };
+        }
+
+        this.stars -= theme.cost;
+        this.unlockedThemes.push(themeId);
+        this.save();
+        return { success: true };
+    }
+
+    /**
+     * Set active theme
+     */
+    setActiveTheme(themeId) {
+        if (!this.unlockedThemes.includes(themeId)) {
+            return { success: false, error: 'Theme not unlocked' };
+        }
+        this.activeTheme = themeId;
+        this.save();
+        return { success: true };
+    }
+
+    /**
+     * Purchase a reader perk
+     */
+    purchasePerk(perkId) {
+        const perk = this.readerPerks.find(p => p.id === perkId);
+        if (!perk) return { success: false, error: 'Invalid perk' };
+
+        if (this.unlockedPerks.includes(perkId)) {
+            return { success: false, error: 'Already owned' };
+        }
+
+        if (this.stars < perk.cost) {
+            return { success: false, error: 'Not enough stars' };
+        }
+
+        this.stars -= perk.cost;
+        this.unlockedPerks.push(perkId);
+        this.save();
+        return { success: true };
+    }
+
+    /**
+     * Purchase a staff upgrade
+     */
+    purchaseUpgrade(upgradeId) {
+        const upgrade = this.staffUpgrades.find(u => u.id === upgradeId);
+        if (!upgrade) return { success: false, error: 'Invalid upgrade' };
+
+        if (this.purchasedUpgrades.includes(upgradeId)) {
+            return { success: false, error: 'Already purchased' };
+        }
+
+        // Check if previous level is purchased (for tiered upgrades)
+        if (upgrade.level > 1) {
+            const prevLevel = this.staffUpgrades.find(u =>
+                u.effect.type === upgrade.effect.type && u.level === upgrade.level - 1
+            );
+            if (prevLevel && !this.purchasedUpgrades.includes(prevLevel.id)) {
+                return { success: false, error: 'Need previous level first' };
+            }
+        }
+
+        if (this.stars < upgrade.cost) {
+            return { success: false, error: 'Not enough stars' };
+        }
+
+        this.stars -= upgrade.cost;
+        this.purchasedUpgrades.push(upgradeId);
+        this.save();
+        return { success: true };
+    }
+
+    /**
+     * Get active perk effects
+     */
+    getPerkEffect(effectType) {
+        let totalEffect = 1;
+        for (const perkId of this.unlockedPerks) {
+            const perk = this.readerPerks.find(p => p.id === perkId);
+            if (perk && perk.effect.type === effectType) {
+                totalEffect *= perk.effect.value;
+            }
+        }
+        return totalEffect;
+    }
+
+    /**
+     * Get active upgrade effects
+     */
+    getUpgradeEffect(effectType) {
+        let bestEffect = 1;
+        for (const upgradeId of this.purchasedUpgrades) {
+            const upgrade = this.staffUpgrades.find(u => u.id === upgradeId);
+            if (upgrade && upgrade.effect.type === effectType) {
+                bestEffect = Math.max(bestEffect, upgrade.effect.value);
+            }
+        }
+        return bestEffect;
+    }
+
+    /**
      * Check and unlock achievements
      */
     checkAchievements() {
@@ -2061,6 +2307,10 @@ class GameState {
                         finalEarnings = Math.floor(finalEarnings * 0.75); // 25% penalty
                     }
 
+                    // Apply perk earning bonus
+                    const perkBonus = this.getPerkEffect('earning_bonus');
+                    finalEarnings = Math.floor(finalEarnings * perkBonus);
+
                     // Earn stars
                     this.stars += finalEarnings;
 
@@ -2238,6 +2488,10 @@ class GameState {
         // Check floor synergies
         this.checkFloorSynergies();
 
+        // Sync totalStarsEarned with stats and check prestige
+        this.totalStarsEarned = this.stats.totalStarsEarned;
+        this.checkPrestige();
+
         // Trigger cozy micro-events
         if (now >= this.nextCozyEventTime && this.floors.length > 0) {
             this.triggerCozyEvent();
@@ -2298,6 +2552,13 @@ class GameState {
             achievements: this.achievements,
             dailyLogin: this.dailyLogin,
             readerCollection: this.readerCollection,
+            currentPrestige: this.currentPrestige,
+            ownedDecorations: this.ownedDecorations,
+            unlockedThemes: this.unlockedThemes,
+            activeTheme: this.activeTheme,
+            unlockedPerks: this.unlockedPerks,
+            purchasedUpgrades: this.purchasedUpgrades,
+            totalStarsEarned: this.totalStarsEarned,
             timestamp: Date.now()
         };
         localStorage.setItem('simlibrary_save_v2', JSON.stringify(saveData));
@@ -2363,6 +2624,15 @@ class GameState {
                 if (data.readerCollection) {
                     this.readerCollection = data.readerCollection;
                 }
+
+                // Load progression system data
+                this.currentPrestige = data.currentPrestige || 'community';
+                this.ownedDecorations = data.ownedDecorations || [];
+                this.unlockedThemes = data.unlockedThemes || ['classic'];
+                this.activeTheme = data.activeTheme || 'classic';
+                this.unlockedPerks = data.unlockedPerks || [];
+                this.purchasedUpgrades = data.purchasedUpgrades || [];
+                this.totalStarsEarned = data.totalStarsEarned || this.stats.totalStarsEarned || 0;
 
                 // Migrate old floors to have staff array and upgradeLevel if missing
                 this.floors.forEach(floor => {
