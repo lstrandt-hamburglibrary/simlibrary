@@ -282,18 +282,18 @@ class GameState {
         // Unlockable decorations
         this.decorations = [
             // Floor decorations (can place 2 per floor)
-            { id: 'plant', name: 'Potted Plant', emoji: '🪴', cost: 500, unlockPrestige: 'community', type: 'floor' },
-            { id: 'globe', name: 'Globe', emoji: '🌐', cost: 1000, unlockPrestige: 'town', type: 'floor' },
-            { id: 'clock', name: 'Grandfather Clock', emoji: '🕰️', cost: 2000, unlockPrestige: 'town', type: 'floor' },
-            { id: 'art', name: 'Famous Painting', emoji: '🖼️', cost: 3000, unlockPrestige: 'city', type: 'floor' },
-            { id: 'lamp', name: 'Reading Lamp', emoji: '🪔', cost: 1500, unlockPrestige: 'community', type: 'floor' },
-            { id: 'vase', name: 'Flower Vase', emoji: '🌸', cost: 800, unlockPrestige: 'community', type: 'floor' },
+            { id: 'plant', name: 'Potted Plant', emoji: '🪴', cost: 50, unlockPrestige: 'community', type: 'floor' },
+            { id: 'globe', name: 'Globe', emoji: '🌐', cost: 100, unlockPrestige: 'community', type: 'floor' },
+            { id: 'clock', name: 'Grandfather Clock', emoji: '🕰️', cost: 200, unlockPrestige: 'town', type: 'floor' },
+            { id: 'art', name: 'Famous Painting', emoji: '🖼️', cost: 300, unlockPrestige: 'city', type: 'floor' },
+            { id: 'lamp', name: 'Reading Lamp', emoji: '🪔', cost: 75, unlockPrestige: 'community', type: 'floor' },
+            { id: 'vase', name: 'Flower Vase', emoji: '🌸', cost: 50, unlockPrestige: 'community', type: 'floor' },
             // Lobby decorations (placed in lobby)
-            { id: 'fountain', name: 'Reading Fountain', emoji: '⛲', cost: 5000, unlockPrestige: 'city', type: 'lobby' },
-            { id: 'statue', name: 'Book Statue', emoji: '🗿', cost: 10000, unlockPrestige: 'city', type: 'lobby' },
-            { id: 'chandelier', name: 'Crystal Chandelier', emoji: '💎', cost: 25000, unlockPrestige: 'regional', type: 'lobby' },
-            { id: 'garden', name: 'Indoor Garden', emoji: '🌳', cost: 15000, unlockPrestige: 'regional', type: 'lobby' },
-            { id: 'aquarium', name: 'Aquarium', emoji: '🐠', cost: 8000, unlockPrestige: 'town', type: 'lobby' }
+            { id: 'fountain', name: 'Reading Fountain', emoji: '⛲', cost: 500, unlockPrestige: 'city', type: 'lobby' },
+            { id: 'statue', name: 'Book Statue', emoji: '🗿', cost: 1000, unlockPrestige: 'city', type: 'lobby' },
+            { id: 'chandelier', name: 'Crystal Chandelier', emoji: '💎', cost: 2500, unlockPrestige: 'regional', type: 'lobby' },
+            { id: 'garden', name: 'Indoor Garden', emoji: '🌳', cost: 1500, unlockPrestige: 'regional', type: 'lobby' },
+            { id: 'aquarium', name: 'Aquarium', emoji: '🐠', cost: 400, unlockPrestige: 'town', type: 'lobby' }
         ];
         this.ownedDecorations = [];
 
