@@ -815,13 +815,13 @@ body {
 .book-categories {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .book-category-card {
     background: var(--bg-primary);
-    padding: 10px;
-    border-radius: var(--radius-md);
+    padding: 8px;
+    border-radius: var(--radius-sm);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -838,11 +838,11 @@ body {
 
 .locked-message {
     text-align: center;
-    padding: 20px;
+    padding: 8px;
 }
 
 .locked-message p {
-    font-size: 14px;
+    font-size: 11px;
     color: var(--text-secondary);
     font-style: italic;
 }
