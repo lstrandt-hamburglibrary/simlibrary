@@ -215,6 +215,127 @@ class GameState {
             vipServed: 5          // +5 per VIP
         };
 
+        // Floor synergy bonuses
+        this.floorSynergies = [
+            {
+                id: 'study_boost',
+                name: 'Study Boost',
+                emoji: '📚☕',
+                description: '+30% stars from study floors',
+                requires: ['reference', 'periodicals'], // Any reference + any periodicals
+                effect: { type: 'star_bonus', floors: ['reference', 'periodicals', 'academic_journals', 'newspapers'], value: 1.3 }
+            },
+            {
+                id: 'family_fun',
+                name: 'Family Fun',
+                emoji: '👨‍👩‍👧‍👦',
+                description: '+25% stars from kids floors',
+                requires: ['board_books', 'picture_books'],
+                effect: { type: 'star_bonus', floors: ['board_books', 'picture_books', 'early_readers', 'chapter_books'], value: 1.25 }
+            },
+            {
+                id: 'teen_hangout',
+                name: 'Teen Hangout',
+                emoji: '🎮📱',
+                description: '+20% more teen visitors',
+                requires: ['young_adult', 'graphic_novels'],
+                effect: { type: 'spawn_bonus', readerType: 'teen', value: 1.2 }
+            },
+            {
+                id: 'scholar_bonus',
+                name: 'Scholar\'s Paradise',
+                emoji: '🎓📖',
+                description: '+35% stars from academic floors',
+                requires: ['academic_journals', 'special_collections'],
+                effect: { type: 'star_bonus', floors: ['academic_journals', 'special_collections', 'rare_books'], value: 1.35 }
+            },
+            {
+                id: 'cozy_corner',
+                name: 'Cozy Corner',
+                emoji: '🛋️📚',
+                description: 'Readers stay 20% longer',
+                requires: ['fiction', 'mystery'],
+                effect: { type: 'browse_time', value: 1.2 }
+            },
+            {
+                id: 'knowledge_hub',
+                name: 'Knowledge Hub',
+                emoji: '🧠💡',
+                description: '+25% stars from non-fiction',
+                requires: ['science', 'history'],
+                effect: { type: 'star_bonus', floors: ['science', 'history', 'biography', 'travel'], value: 1.25 }
+            }
+        ];
+        this.activeSynergies = []; // Currently active synergies
+
+        // Cozy micro-events (quick, fun surprises)
+        this.cozyEvents = [
+            {
+                id: 'storytime_rush',
+                name: 'Storytime!',
+                emoji: '📖👶',
+                description: 'Kids flood in for story time!',
+                effect: () => {
+                    // Spawn 5 kid readers instantly
+                    for (let i = 0; i < 5; i++) {
+                        this.spawnReader('kid');
+                    }
+                }
+            },
+            {
+                id: 'book_donation',
+                name: 'Book Donation',
+                emoji: '📦📚',
+                description: 'Someone donated books! +100 stars',
+                effect: () => {
+                    this.stars += 100;
+                    this.stats.totalStarsEarned += 100;
+                }
+            },
+            {
+                id: 'lost_and_found',
+                name: 'Lost & Found',
+                emoji: '🔍💎',
+                description: 'Found a Tower Buck in lost & found!',
+                effect: () => {
+                    this.towerBucks += 1;
+                    this.stats.totalTowerBucksEarned += 1;
+                }
+            },
+            {
+                id: 'coffee_spill',
+                name: 'Coffee Break',
+                emoji: '☕😊',
+                description: 'Free coffee! Mood boost +15',
+                effect: () => {
+                    this.mood = Math.min(100, this.mood + 15);
+                }
+            },
+            {
+                id: 'school_visit',
+                name: 'School Visit',
+                emoji: '🏫📚',
+                description: 'A class is visiting! Students incoming!',
+                effect: () => {
+                    for (let i = 0; i < 4; i++) {
+                        this.spawnReader('student');
+                    }
+                }
+            },
+            {
+                id: 'senior_club',
+                name: 'Book Club',
+                emoji: '👵📖',
+                description: 'Senior book club meeting!',
+                effect: () => {
+                    for (let i = 0; i < 3; i++) {
+                        this.spawnReader('senior');
+                    }
+                }
+            }
+        ];
+        this.nextCozyEventTime = Date.now() + 120000; // First cozy event in 2 minutes
+
         // Stats tracking (all-time)
         this.stats = {
             totalBooksCheckedOut: 0,
@@ -1537,6 +1658,82 @@ class GameState {
     }
 
     /**
+     * Check which floor synergies are active
+     */
+    checkFloorSynergies() {
+        const floorTypes = this.floors
+            .filter(f => f.status === 'ready')
+            .map(f => f.type);
+
+        const newSynergies = [];
+        const previousIds = this.activeSynergies.map(s => s.id);
+
+        this.floorSynergies.forEach(synergy => {
+            // Check if all required floors are present
+            const hasAll = synergy.requires.every(req => floorTypes.includes(req));
+            if (hasAll) {
+                newSynergies.push(synergy);
+
+                // Notify if newly activated
+                if (!previousIds.includes(synergy.id)) {
+                    this._newSynergy = synergy;
+                }
+            }
+        });
+
+        this.activeSynergies = newSynergies;
+    }
+
+    /**
+     * Get synergy bonus for a floor type
+     */
+    getSynergyBonus(floorType) {
+        let bonus = 1;
+
+        this.activeSynergies.forEach(synergy => {
+            if (synergy.effect.type === 'star_bonus' &&
+                synergy.effect.floors &&
+                synergy.effect.floors.includes(floorType)) {
+                bonus *= synergy.effect.value;
+            }
+        });
+
+        return bonus;
+    }
+
+    /**
+     * Get synergy browse time multiplier
+     */
+    getSynergyBrowseTime() {
+        let multiplier = 1;
+
+        this.activeSynergies.forEach(synergy => {
+            if (synergy.effect.type === 'browse_time') {
+                multiplier *= synergy.effect.value;
+            }
+        });
+
+        return multiplier;
+    }
+
+    /**
+     * Trigger a random cozy micro-event
+     */
+    triggerCozyEvent() {
+        // Pick random event
+        const event = this.cozyEvents[Math.floor(Math.random() * this.cozyEvents.length)];
+
+        // Execute effect
+        event.effect();
+
+        // Store for notification
+        this._cozyEvent = event;
+
+        // Next cozy event in 2-5 minutes
+        this.nextCozyEventTime = Date.now() + (120000 + Math.random() * 180000);
+    }
+
+    /**
      * Check and unlock achievements
      */
     checkAchievements() {
@@ -1735,6 +1932,10 @@ class GameState {
                     const starMultiplier = this.getEventEffect('star_multiplier');
                     let finalEarnings = Math.floor(reader.earningAmount * starMultiplier);
 
+                    // Apply floor synergy bonus
+                    const synergyBonus = this.getSynergyBonus(floor.type);
+                    finalEarnings = Math.floor(finalEarnings * synergyBonus);
+
                     // Apply mood bonus (high mood = bonus stars)
                     if (this.mood >= 70) {
                         const moodBonus = Math.floor(finalEarnings * 0.25); // 25% bonus
@@ -1917,6 +2118,14 @@ class GameState {
 
         // Update mood meter
         this.updateMood();
+
+        // Check floor synergies
+        this.checkFloorSynergies();
+
+        // Trigger cozy micro-events
+        if (now >= this.nextCozyEventTime && this.floors.length > 0) {
+            this.triggerCozyEvent();
+        }
 
         // Update time played stat (every tick = 1 second)
         this.stats.timePlayed += 1;

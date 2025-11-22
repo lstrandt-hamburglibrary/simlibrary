@@ -321,6 +321,18 @@ function updateGlobalStats() {
         showToast(`💎 Happy patron left a tip!`);
         delete game._moodTip;
     }
+
+    // Check for new synergies
+    if (game._newSynergy) {
+        showToast(`${game._newSynergy.emoji} ${game._newSynergy.name} activated! ${game._newSynergy.description}`);
+        delete game._newSynergy;
+    }
+
+    // Check for cozy events
+    if (game._cozyEvent) {
+        showToast(`${game._cozyEvent.emoji} ${game._cozyEvent.name}! ${game._cozyEvent.description}`);
+        delete game._cozyEvent;
+    }
 }
 
 /**
