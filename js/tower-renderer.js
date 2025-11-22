@@ -12,8 +12,14 @@ class TowerRenderer {
         // Canvas dimensions
         this.width = 600;
         this.height = 800;
-        this.canvas.width = this.width;
-        this.canvas.height = this.height;
+
+        // Handle high-DPI displays for sharp text
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = this.width * dpr;
+        this.canvas.height = this.height * dpr;
+        this.canvas.style.width = this.width + 'px';
+        this.canvas.style.height = this.height + 'px';
+        this.ctx.scale(dpr, dpr);
 
         // Floor dimensions
         this.floorHeight = 140;
