@@ -17,8 +17,7 @@ class TowerRenderer {
         const dpr = window.devicePixelRatio || 1;
         this.canvas.width = this.width * dpr;
         this.canvas.height = this.height * dpr;
-        this.canvas.style.width = this.width + 'px';
-        this.canvas.style.height = this.height + 'px';
+        // Don't set inline style - let CSS handle sizing
         this.ctx.scale(dpr, dpr);
 
         // Floor dimensions
