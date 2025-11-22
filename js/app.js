@@ -1199,8 +1199,8 @@ function renderMissionBanner() {
         const seconds = timeRemaining;
 
         banner.innerHTML = `
-            <span>🔍 Find ${findMission.itemType.emoji} ${findMission.found}/${findMission.total}</span>
-            <span>${findMission.reward}⭐ ${seconds}s</span>
+            <div>🔍 Find ${findMission.itemType.emoji} ${findMission.itemType.name}</div>
+            <div>${findMission.found}/${findMission.total} | ${findMission.reward}⭐ | ${seconds}s</div>
         `;
 
         banner.style.display = 'flex';
@@ -1214,8 +1214,8 @@ function renderMissionBanner() {
         const seconds = timeRemaining % 60;
 
         banner.innerHTML = `
-            <span>${event.emoji} ${event.name}</span>
-            <span>${seconds}s</span>
+            <div>${event.emoji} ${event.name}</div>
+            <div>${seconds}s</div>
         `;
 
         banner.style.display = 'flex';
@@ -1232,8 +1232,8 @@ function renderMissionBanner() {
         const seconds = timeRemaining % 60;
 
         banner.innerHTML = `
-            <span>📝 ${mission.categoryName} ${mission.progress}/${mission.requestCount}</span>
-            <span>${mission.reward}⭐ ${minutes}:${seconds.toString().padStart(2, '0')}</span>
+            <div>📝 ${mission.categoryName} books</div>
+            <div>${mission.progress}/${mission.requestCount} | ${mission.reward}⭐ | ${minutes}:${seconds.toString().padStart(2, '0')}</div>
         `;
 
         banner.style.display = 'flex';
