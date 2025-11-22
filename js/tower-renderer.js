@@ -1956,7 +1956,7 @@ class TowerRenderer {
      */
     handleTouchEnd(e) {
         // If we didn't move much, treat it as a tap/click
-        if (!this._touchMoved && this.isDragging) {
+        if (!this._touchMoved) {
             // Use the rect stored at touch start to avoid page scroll mismatch
             const rect = this._touchStartRect || this.canvas.getBoundingClientRect();
             const clickX = this.dragStartX - rect.left;
