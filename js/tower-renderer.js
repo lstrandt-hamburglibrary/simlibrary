@@ -686,11 +686,14 @@ class TowerRenderer {
         this.ctx.fillText(`${floor.emoji} ${floor.name}`, x + 10, y + 12);
         this.ctx.restore();
 
-        // Check if this is a special room
+        // Check if this is a special room or utility room
         const floorType = this.game.floorTypes.find(ft => ft.id === floor.typeId);
         if (floorType && floorType.isSpecialRoom) {
             // Draw special room content
             this.drawSpecialRoom(floor, x, y, colors, floorType);
+        } else if (floorType && floorType.isUtilityRoom) {
+            // Draw utility room content
+            this.drawUtilityRoom(floor, x, y, colors, floorType);
         } else {
             // Draw book shelves (3 categories) - scale with floor size
             const scale = this.getScale();
@@ -2492,6 +2495,109 @@ class TowerRenderer {
         this.ctx.font = 'bold 11px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.fillText(`✨ ACTIVE BONUS: ${floorType.bonus.type.toUpperCase().replace('_', ' ')}`, centerX, y + this.floorHeight - 13);
+    }
+
+    /**
+     * Draw utility room (bathroom, basement)
+     */
+    drawUtilityRoom(floor, x, y, colors, floorType) {
+        const centerX = x + this.floorWidth / 2;
+
+        // Draw bonus description
+        this.ctx.fillStyle = '#666';
+        this.ctx.font = '12px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(floorType.bonus.description, centerX, y + 35);
+
+        switch(floorType.id) {
+            case 'bathroom':
+                // Draw bathroom stalls
+                for (let i = 0; i < 3; i++) {
+                    const stallX = x + 60 + i * 120;
+                    const stallY = y + 45;
+
+                    // Stall walls
+                    this.ctx.fillStyle = '#B0BEC5';
+                    this.ctx.fillRect(stallX, stallY, 80, 50);
+
+                    // Stall door
+                    this.ctx.fillStyle = '#90A4AE';
+                    this.ctx.fillRect(stallX + 10, stallY + 5, 60, 40);
+
+                    // Door handle
+                    this.ctx.fillStyle = '#546E7A';
+                    this.ctx.beginPath();
+                    this.ctx.arc(stallX + 60, stallY + 25, 3, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+
+                // Draw sink area
+                const sinkX = x + this.floorWidth - 100;
+                const sinkY = y + 50;
+
+                // Counter
+                this.ctx.fillStyle = '#ECEFF1';
+                this.ctx.fillRect(sinkX, sinkY, 80, 40);
+
+                // Sink basin
+                this.ctx.fillStyle = '#CFD8DC';
+                this.ctx.beginPath();
+                this.ctx.ellipse(sinkX + 40, sinkY + 20, 25, 15, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Faucet
+                this.ctx.fillStyle = '#78909C';
+                this.ctx.fillRect(sinkX + 35, sinkY + 5, 10, 15);
+
+                // Mirror above sink
+                this.ctx.fillStyle = '#E3F2FD';
+                this.ctx.fillRect(sinkX + 15, sinkY - 25, 50, 25);
+                this.ctx.strokeStyle = '#90A4AE';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(sinkX + 15, sinkY - 25, 50, 25);
+                break;
+
+            case 'basement':
+                // Draw storage shelves
+                for (let i = 0; i < 2; i++) {
+                    const shelfX = x + 80 + i * 200;
+                    const shelfY = y + 45;
+
+                    // Shelf unit
+                    this.ctx.fillStyle = '#8D6E63';
+                    this.ctx.fillRect(shelfX, shelfY, 120, 55);
+
+                    // Shelf dividers
+                    this.ctx.fillStyle = '#6D4C41';
+                    this.ctx.fillRect(shelfX, shelfY + 18, 120, 3);
+                    this.ctx.fillRect(shelfX, shelfY + 36, 120, 3);
+
+                    // Cleaning supplies on shelves
+                    this.ctx.font = '14px Arial';
+                    this.ctx.fillText('🧹', shelfX + 20, shelfY + 15);
+                    this.ctx.fillText('🧴', shelfX + 50, shelfY + 15);
+                    this.ctx.fillText('🪣', shelfX + 80, shelfY + 15);
+                    this.ctx.fillText('🧽', shelfX + 30, shelfY + 33);
+                    this.ctx.fillText('🧤', shelfX + 70, shelfY + 33);
+                }
+
+                // Mop and bucket
+                this.ctx.font = '30px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('🪣', x + this.floorWidth - 60, y + 80);
+                break;
+        }
+
+        // Show staff hired if basement
+        if (floorType.id === 'basement' && floor.staff && floor.staff.length > 0) {
+            this.ctx.fillStyle = 'rgba(76, 175, 80, 0.3)';
+            this.ctx.fillRect(x + 10, y + this.floorHeight - 25, this.floorWidth - 20, 15);
+
+            this.ctx.fillStyle = '#4CAF50';
+            this.ctx.font = 'bold 11px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(`🧹 CLEANING CREW: ${floor.staff.join(', ')}`, centerX, y + this.floorHeight - 13);
+        }
     }
 
     /**
