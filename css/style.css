@@ -204,10 +204,11 @@ body {
     display: block;
     width: 100%;
     max-width: 600px;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 3 / 4;
     touch-action: none; /* We handle all touch interactions for scrolling and taps */
     -webkit-user-select: none;
     user-select: none;
+    image-rendering: -webkit-optimize-contrast; /* Sharper on WebKit */
 }
 
 .floors-list {
