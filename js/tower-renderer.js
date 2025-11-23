@@ -1552,6 +1552,7 @@ class TowerRenderer {
             if (clickX >= b.x && clickX <= b.x + b.width &&
                 clickY >= b.y && clickY <= b.y + b.height) {
                 console.log('Build slot clicked!');
+                if (window.haptic) window.haptic('medium');
                 if (window.openBuildModal) {
                     window.openBuildModal();
                 }
@@ -1570,6 +1571,7 @@ class TowerRenderer {
                     if (clickX >= b.x - padding && clickX <= b.x + b.width + padding &&
                         clickY >= b.y - padding && clickY <= b.y + b.height + padding) {
                         console.log('Find item clicked:', item.emoji);
+                        if (window.haptic) window.haptic('collect');
                         // Mark as found
                         item.found = true;
                         this.game.currentFindMission.found++;
@@ -1580,6 +1582,7 @@ class TowerRenderer {
 
                         // Check if mission complete
                         if (this.game.currentFindMission.found >= this.game.currentFindMission.total) {
+                            if (window.haptic) window.haptic('success');
                             this.game.completeFindMission();
                         }
 
@@ -1596,6 +1599,7 @@ class TowerRenderer {
             if (clickX >= b.x - padding && clickX <= b.x + b.width + padding &&
                 clickY >= b.y - padding && clickY <= b.y + b.height + padding) {
                 console.log('Mini-quest clicked:', this.game.currentMiniQuest.emoji);
+                if (window.haptic) window.haptic('success');
 
                 // Spawn celebration effect
                 this.spawnConfetti(clickX, clickY + this.scrollY, 20);
@@ -1616,6 +1620,7 @@ class TowerRenderer {
                 if (clickX >= b.x && clickX <= b.x + b.width &&
                     clickY >= b.y && clickY <= b.y + b.height) {
                     console.log('Floor clicked:', floor.name);
+                    if (window.haptic) window.haptic('light');
                     // Floor clicked - trigger detail view
                     if (window.openFloorDetail) {
                         window.openFloorDetail(floor.id);

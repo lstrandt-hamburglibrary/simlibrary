@@ -180,11 +180,13 @@ function init() {
 function setupEventListeners() {
     // Add Floor button - opens build modal
     document.getElementById('add-floor-btn').addEventListener('click', () => {
+        haptic('medium');
         openBuildModal();
     });
 
     // Detail modal close button
     document.getElementById('close-detail-modal').addEventListener('click', () => {
+        haptic('light');
         closeDetailModal();
     });
 
@@ -197,6 +199,7 @@ function setupEventListeners() {
 
     // Build modal close button
     document.getElementById('close-build-modal').addEventListener('click', () => {
+        haptic('light');
         closeBuildModal();
     });
 
@@ -209,11 +212,13 @@ function setupEventListeners() {
 
     // Stats button - opens stats modal
     document.getElementById('open-stats-btn').addEventListener('click', () => {
+        haptic('medium');
         openStatsModal();
     });
 
     // Stats modal close button
     document.getElementById('close-stats-modal').addEventListener('click', () => {
+        haptic('light');
         closeStatsModal();
     });
 
@@ -226,11 +231,13 @@ function setupEventListeners() {
 
     // Achievements button - opens achievements modal
     document.getElementById('open-achievements-btn').addEventListener('click', () => {
+        haptic('medium');
         openAchievementsModal();
     });
 
     // Achievements modal close button
     document.getElementById('close-achievements-modal').addEventListener('click', () => {
+        haptic('light');
         closeAchievementsModal();
     });
 
@@ -243,11 +250,13 @@ function setupEventListeners() {
 
     // Reader collection button - opens collection modal
     document.getElementById('open-collection-btn').addEventListener('click', () => {
+        haptic('medium');
         openCollectionModal();
     });
 
     // Collection modal close button
     document.getElementById('close-collection-modal').addEventListener('click', () => {
+        haptic('light');
         closeCollectionModal();
     });
 
@@ -260,11 +269,13 @@ function setupEventListeners() {
 
     // Upgrades button - opens upgrades modal
     document.getElementById('open-upgrades-btn').addEventListener('click', () => {
+        haptic('medium');
         openUpgradesModal();
     });
 
     // Upgrades modal close button
     document.getElementById('close-upgrades-modal').addEventListener('click', () => {
+        haptic('light');
         closeUpgradesModal();
     });
 
@@ -278,6 +289,7 @@ function setupEventListeners() {
     // Tab buttons for upgrades modal
     document.querySelectorAll('.upgrades-tabs .tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+            haptic('light');
             document.querySelectorAll('.upgrades-tabs .tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             renderUpgradesTab(btn.dataset.tab);
@@ -286,14 +298,17 @@ function setupEventListeners() {
 
     // Confirmation modal buttons
     document.getElementById('close-confirm-modal').addEventListener('click', () => {
+        haptic('light');
         closeConfirmModal(false);
     });
 
     document.getElementById('confirm-cancel').addEventListener('click', () => {
+        haptic('light');
         closeConfirmModal(false);
     });
 
     document.getElementById('confirm-ok').addEventListener('click', () => {
+        haptic('medium');
         closeConfirmModal(true);
     });
 
@@ -348,42 +363,49 @@ function updateGlobalStats() {
 
     // Check for special visitor notifications
     if (game._newSpecialVisitor) {
+        haptic('success');
         showToast(`${game._newSpecialVisitor.emoji} ${game._newSpecialVisitor.name} arrived! ${game._newSpecialVisitor.description}`);
         delete game._newSpecialVisitor;
     }
 
     // Check for departing visitors
     if (game._departingVisitor) {
+        haptic('light');
         showToast(`${game._departingVisitor.emoji} ${game._departingVisitor.name} left the library.`);
         delete game._departingVisitor;
     }
 
     // Check for mood tips
     if (game._moodTip) {
+        haptic('collect');
         showToast(`💎 Happy patron left a tip!`);
         delete game._moodTip;
     }
 
     // Check for new synergies
     if (game._newSynergy) {
+        haptic('success');
         showToast(`${game._newSynergy.emoji} ${game._newSynergy.name} activated! ${game._newSynergy.description}`);
         delete game._newSynergy;
     }
 
     // Check for cozy events
     if (game._cozyEvent) {
+        haptic('medium');
         showToast(`${game._cozyEvent.emoji} ${game._cozyEvent.name}! ${game._cozyEvent.description}`);
         delete game._cozyEvent;
     }
 
     // Check for Event Hall events
     if (game._newHallEvent) {
+        haptic('success');
         showToast(`🎭 Event Hall: ${game._newHallEvent.emoji} ${game._newHallEvent.name}! ${game._newHallEvent.description}`);
         delete game._newHallEvent;
     }
 
     // Check for ended Event Hall events
     if (game._hallEventEnded) {
+        haptic('collect');
         showToast(`🎭 ${game._hallEventEnded.emoji} ${game._hallEventEnded.name} ended! +${game._hallEventEnded.reward} ⭐`);
         delete game._hallEventEnded;
     }
@@ -391,6 +413,7 @@ function updateGlobalStats() {
     // Check for weather changes
     if (game._weatherChanged) {
         const weather = game._weatherChanged;
+        haptic('light');
         let effectText = '';
         if (weather.moodEffect > 0) effectText = `Mood +${weather.moodEffect}`;
         else if (weather.moodEffect < 0) effectText = `Mood ${weather.moodEffect}`;
@@ -403,11 +426,13 @@ function updateGlobalStats() {
     // Check for holiday notifications
     if (game._holidayStarted) {
         const holiday = game._holidayStarted;
+        haptic('success');
         showToast(`${holiday.emoji} ${holiday.name} has begun! Special bonuses active for ${holiday.duration} day(s).`);
         delete game._holidayStarted;
     }
     if (game._holidayEnded) {
         const holiday = game._holidayEnded;
+        haptic('light');
         showToast(`${holiday.emoji} ${holiday.name} has ended. See you next year!`);
         delete game._holidayEnded;
     }
@@ -415,6 +440,7 @@ function updateGlobalStats() {
     // Check for book donations
     if (game._bookDonation) {
         const donation = game._bookDonation;
+        haptic('collect');
         showToast(`${donation.source.emoji} ${donation.source.name}: +${donation.booksAdded} ${donation.categoryEmoji} ${donation.categoryName} at ${donation.floorName}!`);
         delete game._bookDonation;
     }
@@ -422,11 +448,13 @@ function updateGlobalStats() {
     // Check for library card notifications
     if (game._newLibraryCard) {
         const card = game._newLibraryCard;
+        haptic('success');
         showToast(`📇 New library card member: ${card.emoji} ${card.name}!`);
         delete game._newLibraryCard;
     }
     if (game._cardMilestone) {
         const milestone = game._cardMilestone;
+        haptic('success');
         showToast(`🎉 ${milestone.cardHolder.emoji} ${milestone.cardHolder.name} reached ${milestone.cardHolder.visits} visits! ${milestone.benefit.description}`);
         delete game._cardMilestone;
     }
@@ -434,6 +462,7 @@ function updateGlobalStats() {
     // Check for night cleaning
     if (game._nightCleaningOccurred) {
         if (game._cleanedAmount > 0) {
+            haptic('light');
             showToast(`🧹 Night cleaning complete! Cleaned ${game._cleanedAmount} trash.`);
         }
         delete game._nightCleaningOccurred;
@@ -442,23 +471,48 @@ function updateGlobalStats() {
 
     // Check for inspector bonus
     if (game._inspectorBonus !== undefined) {
+        haptic('collect');
         showToast(`🔍 Library Inspector awarded ${game._inspectorBonus} ⭐ for tidiness!`);
         delete game._inspectorBonus;
     }
 
     // Check for new mini-quest
     if (game._newMiniQuest) {
+        haptic('medium');
         showToast(`${game._newMiniQuest.emoji} ${game._newMiniQuest.description} Tap to help!`);
         delete game._newMiniQuest;
     }
 
     // Check for completed mini-quest
     if (game._completedMiniQuest) {
+        haptic('success');
         const bucks = game._completedMiniQuest.rewardBucks > 0 ? ` + ${game._completedMiniQuest.rewardBucks} 💎` : '';
         showToast(`✅ ${game._completedMiniQuest.name} complete! +${game._completedMiniQuest.reward} ⭐${bucks}`);
         delete game._completedMiniQuest;
     }
 }
+
+/**
+ * Haptic feedback utility
+ * Patterns: 'light' (tap), 'medium' (action), 'heavy' (success), 'error' (double), 'success' (celebration)
+ */
+function haptic(pattern = 'light') {
+    if (!navigator.vibrate) return;
+
+    const patterns = {
+        light: [10],           // Quick tap
+        medium: [20],          // Button press
+        heavy: [30],           // Building/upgrade complete
+        error: [50, 50, 50],   // Error feedback
+        success: [30, 50, 30, 50, 50], // Achievement/reward
+        collect: [15, 30, 15], // Collecting stars
+    };
+
+    navigator.vibrate(patterns[pattern] || patterns.light);
+}
+
+// Make haptic globally accessible for tower-renderer
+window.haptic = haptic;
 
 /**
  * Show a toast notification
@@ -566,10 +620,12 @@ function createFloorCard(floor) {
     card.addEventListener('click', (e) => {
         // Don't open if clicking rush button
         if (e.target.classList.contains('rush-btn') || e.target.closest('.rush-btn')) {
+            haptic('medium');
             const floorId = e.target.dataset.floorId || e.target.closest('.rush-btn').dataset.floorId;
             handleRushConstruction(floorId);
             return;
         }
+        haptic('light');
         openFloorDetail(floor.id);
     });
 
@@ -775,10 +831,12 @@ async function handleUpgradeFloor(floorId) {
 
     const result = game.upgradeFloor(floorId);
     if (result.success) {
+        haptic('heavy');
         renderUpgradeSection(floor);
         renderBookCategories(floor);
         updateGlobalStats();
     } else {
+        haptic('error');
         alert(result.error || 'Cannot upgrade floor');
     }
 }
@@ -916,10 +974,12 @@ async function handleHireStaff(floorId, staffIndex) {
 
     const result = game.hireStaff(floorId, hasCustomStaff ? staffIndex : undefined);
     if (result.success) {
+        haptic('heavy');
         renderStaffSlots(floor);
         renderBookCategories(floor);
         updateGlobalStats();
     } else {
+        haptic('error');
         alert(result.error || 'Cannot hire staff');
     }
 }
@@ -1024,10 +1084,12 @@ function renderBookCategories(floor) {
 function handleRestock(floorId, categoryIndex) {
     const result = game.restockBooks(floorId, categoryIndex);
     if (result.success) {
+        haptic('medium');
         const floor = game.getFloor(floorId);
         renderBookCategories(floor);
         updateGlobalStats();
     } else {
+        haptic('error');
         alert(result.error || 'Cannot restock');
     }
 }
@@ -1038,10 +1100,12 @@ function handleRestock(floorId, categoryIndex) {
 function handleRushRestock(floorId, categoryIndex) {
     const success = game.rushRestocking(floorId, categoryIndex);
     if (success) {
+        haptic('medium');
         const floor = game.getFloor(floorId);
         renderBookCategories(floor);
         updateGlobalStats();
     } else {
+        haptic('error');
         alert('Not enough Tower Bucks!');
     }
 }
@@ -1130,6 +1194,7 @@ function openBuildModal() {
 
         if (canAfford) {
             card.addEventListener('click', () => {
+                haptic('medium');
                 handleBuildFloor(floorType.id);
             });
         }
@@ -1172,10 +1237,12 @@ async function handleBuildFloor(floorTypeId) {
 
     const result = game.buildFloor(floorTypeId);
     if (result.success) {
+        haptic('heavy');
         closeBuildModal();
         renderTowerScreen();
         updateGlobalStats();
     } else {
+        haptic('error');
         alert(result.error || 'Cannot build floor');
     }
 }
@@ -1543,10 +1610,12 @@ function renderDecorationsTab(container) {
 function handlePlaceLobbyDecoration(decorationId) {
     const result = game.placeLobbyDecoration(decorationId);
     if (result.success) {
+        haptic('heavy');
         const decoration = game.decorations.find(d => d.id === decorationId);
         showToast(`${decoration.emoji} placed in lobby!`);
         renderUpgradesTab('decorations');
     } else {
+        haptic('error');
         alert(result.error || 'Cannot place decoration');
     }
 }
@@ -1580,9 +1649,11 @@ async function handlePlaceFloorDecoration(decorationId) {
     const result = game.placeFloorDecoration(floor.id, decorationId);
 
     if (result.success) {
+        haptic('heavy');
         showToast(`${decoration.emoji} placed on ${floor.name}!`);
         renderUpgradesTab('decorations');
     } else {
+        haptic('error');
         alert(result.error || 'Cannot place decoration');
     }
 }
@@ -1701,10 +1772,12 @@ async function handlePurchaseDecoration(decorationId) {
 
     const result = game.purchaseDecoration(decorationId);
     if (result.success) {
+        haptic('success');
         renderUpgradesTab('decorations');
         updateGlobalStats();
         showToast(`${decoration.emoji} ${decoration.name} purchased!`);
     } else {
+        haptic('error');
         alert(result.error || 'Cannot purchase decoration');
     }
 }
@@ -1725,10 +1798,12 @@ async function handlePurchasePerk(perkId) {
 
     const result = game.purchasePerk(perkId);
     if (result.success) {
+        haptic('success');
         renderUpgradesTab('perks');
         updateGlobalStats();
         showToast(`${perk.emoji} ${perk.name} activated!`);
     } else {
+        haptic('error');
         alert(result.error || 'Cannot purchase perk');
     }
 }
@@ -1749,10 +1824,12 @@ async function handlePurchaseUpgrade(upgradeId) {
 
     const result = game.purchaseUpgrade(upgradeId);
     if (result.success) {
+        haptic('success');
         renderUpgradesTab('staff');
         updateGlobalStats();
         showToast(`${upgrade.emoji} ${upgrade.name} purchased!`);
     } else {
+        haptic('error');
         alert(result.error || 'Cannot purchase upgrade');
     }
 }
