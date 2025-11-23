@@ -1110,7 +1110,12 @@ class GameState {
                     moodBoost: 5,
                     description: 'Reduces trash generation by 30%'
                 },
-                bookCategories: []
+                bookCategories: [],
+                staffSlots: [
+                    { name: 'Attendant', cost: 100, emoji: '🧑‍💼', color: '#42A5F5', effect: 'Keeps supplies stocked' },
+                    { name: 'Cleaner', cost: 150, emoji: '🧼', color: '#26A69A', effect: 'Maintains cleanliness' },
+                    { name: 'Maintenance', cost: 200, emoji: '🔧', color: '#78909C', effect: 'Fixes issues' }
+                ]
             },
             {
                 id: 'basement',
