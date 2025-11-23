@@ -2606,33 +2606,39 @@ class TowerRenderer {
                 break;
 
             case 'basement':
-                // Draw storage shelves
+                // Draw storage shelves (responsive to floor width)
+                const shelfWidth = this.floorWidth * 0.22;
+                const shelfSpacing = this.floorWidth * 0.35;
+                const shelfStartX = x + this.floorWidth * 0.15;
+
                 for (let i = 0; i < 2; i++) {
-                    const shelfX = x + 80 + i * 200;
+                    const shelfX = shelfStartX + i * shelfSpacing;
                     const shelfY = y + 45;
 
                     // Shelf unit
                     this.ctx.fillStyle = '#8D6E63';
-                    this.ctx.fillRect(shelfX, shelfY, 120, 55);
+                    this.ctx.fillRect(shelfX, shelfY, shelfWidth, 55);
 
                     // Shelf dividers
                     this.ctx.fillStyle = '#6D4C41';
-                    this.ctx.fillRect(shelfX, shelfY + 18, 120, 3);
-                    this.ctx.fillRect(shelfX, shelfY + 36, 120, 3);
+                    this.ctx.fillRect(shelfX, shelfY + 18, shelfWidth, 3);
+                    this.ctx.fillRect(shelfX, shelfY + 36, shelfWidth, 3);
 
                     // Cleaning supplies on shelves
-                    this.ctx.font = '14px Arial';
-                    this.ctx.fillText('🧹', shelfX + 20, shelfY + 15);
-                    this.ctx.fillText('🧴', shelfX + 50, shelfY + 15);
-                    this.ctx.fillText('🪣', shelfX + 80, shelfY + 15);
-                    this.ctx.fillText('🧽', shelfX + 30, shelfY + 33);
-                    this.ctx.fillText('🧤', shelfX + 70, shelfY + 33);
+                    const fontSize = Math.max(10, Math.round(14 * this.getScale()));
+                    this.ctx.font = `${fontSize}px Arial`;
+                    this.ctx.fillText('🧹', shelfX + shelfWidth * 0.17, shelfY + 15);
+                    this.ctx.fillText('🧴', shelfX + shelfWidth * 0.42, shelfY + 15);
+                    this.ctx.fillText('🪣', shelfX + shelfWidth * 0.67, shelfY + 15);
+                    this.ctx.fillText('🧽', shelfX + shelfWidth * 0.25, shelfY + 33);
+                    this.ctx.fillText('🧤', shelfX + shelfWidth * 0.58, shelfY + 33);
                 }
 
                 // Mop and bucket
-                this.ctx.font = '30px Arial';
+                const bucketSize = Math.max(20, Math.round(30 * this.getScale()));
+                this.ctx.font = `${bucketSize}px Arial`;
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText('🪣', x + this.floorWidth - 60, y + 80);
+                this.ctx.fillText('🪣', x + this.floorWidth * 0.88, y + 80);
                 break;
         }
     }
