@@ -23,7 +23,7 @@ class TowerRenderer {
         // Floor dimensions
         this.floorHeight = 110;
         this.floorWidth = 500;
-        this.floorX = 50;
+        this.floorX = (this.width - this.floorWidth) / 2; // Center horizontally
 
         // Elevator dimensions
         this.elevatorWidth = 40;
@@ -123,7 +123,8 @@ class TowerRenderer {
             // Scale floor dimensions proportionally
             this.scale = displayWidth / 600;
             this.floorWidth = 500 * this.scale;
-            this.floorX = 50 * this.scale;
+            // Center the floor horizontally
+            this.floorX = (displayWidth - this.floorWidth) / 2;
             // Shorter floors on desktop (width > 500), taller on mobile
             const baseFloorHeight = displayWidth > 500 ? 110 : 140;
             this.floorHeight = baseFloorHeight * this.scale;
