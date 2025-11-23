@@ -148,9 +148,23 @@ class GameState {
         this.readerNames = {
             first: ['Alex', 'Jamie', 'Sam', 'Taylor', 'Morgan', 'Casey', 'Jordan', 'Riley', 'Avery', 'Quinn',
                     'Emma', 'Liam', 'Olivia', 'Noah', 'Ava', 'Ethan', 'Sophia', 'Mason', 'Isabella', 'Lucas',
-                    'Mia', 'Oliver', 'Charlotte', 'Elijah', 'Amelia', 'James', 'Harper', 'Benjamin', 'Evelyn', 'William'],
+                    'Mia', 'Oliver', 'Charlotte', 'Elijah', 'Amelia', 'James', 'Harper', 'Benjamin', 'Evelyn', 'William',
+                    'Zoe', 'Henry', 'Luna', 'Jack', 'Lily', 'Owen', 'Ella', 'Leo', 'Chloe', 'Daniel',
+                    'Grace', 'Aiden', 'Aria', 'Matthew', 'Scarlett', 'Joseph', 'Victoria', 'David', 'Madison', 'Carter',
+                    'Layla', 'Wyatt', 'Penelope', 'John', 'Nora', 'Gabriel', 'Camila', 'Julian', 'Hannah', 'Luke',
+                    'Addison', 'Anthony', 'Eleanor', 'Isaac', 'Stella', 'Dylan', 'Violet', 'Levi', 'Aurora', 'Andrew',
+                    'Hazel', 'Thomas', 'Audrey', 'Joshua', 'Brooklyn', 'Christopher', 'Bella', 'Jaxon', 'Claire', 'Sebastian',
+                    'Skylar', 'Lincoln', 'Lucy', 'Mateo', 'Paisley', 'Ryan', 'Everly', 'Nathan', 'Anna', 'Aaron',
+                    'Caroline', 'Isaiah', 'Nova', 'Charles', 'Genesis', 'Caleb', 'Emilia', 'Josiah', 'Kennedy', 'Christian',
+                    'Maya', 'Hunter', 'Willow', 'Eli', 'Kinsley', 'Jonathan', 'Naomi', 'Connor', 'Aaliyah', 'Landon'],
             last: ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez',
-                   'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin']
+                   'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin',
+                   'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson',
+                   'Walker', 'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen', 'Hill', 'Flores',
+                   'Green', 'Adams', 'Nelson', 'Baker', 'Hall', 'Rivera', 'Campbell', 'Mitchell', 'Carter', 'Roberts',
+                   'Gomez', 'Phillips', 'Evans', 'Turner', 'Diaz', 'Parker', 'Cruz', 'Edwards', 'Collins', 'Reyes',
+                   'Stewart', 'Morris', 'Morales', 'Murphy', 'Cook', 'Rogers', 'Gutierrez', 'Ortiz', 'Morgan', 'Cooper',
+                   'Peterson', 'Bailey', 'Reed', 'Kelly', 'Howard', 'Ramos', 'Kim', 'Cox', 'Ward', 'Richardson']
         };
 
         // Reader personality types with floor preferences
@@ -2666,6 +2680,7 @@ class GameState {
     registerLibraryCardVisit(readerName, readerEmoji, readerType) {
         // Find existing card holder or create new
         let cardHolder = this.libraryCards.find(c => c.name === readerName);
+        let isNewCard = false;
 
         if (!cardHolder) {
             // Create new card if we have space
@@ -2686,7 +2701,14 @@ class GameState {
                 lastVisit: Date.now()
             };
             this.libraryCards.push(cardHolder);
+            isNewCard = true;
+        }
+
+        // Only notify for new cards or returning patrons (every 5 visits after first)
+        if (isNewCard) {
             this._newLibraryCard = cardHolder;
+        } else if (cardHolder.visits > 0 && cardHolder.visits % 5 === 0) {
+            this._returningPatron = cardHolder;
         }
 
         // Increment visits

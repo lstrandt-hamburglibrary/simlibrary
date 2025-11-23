@@ -526,6 +526,12 @@ function updateGlobalStats() {
         showToast(`📇 New library card member: ${card.emoji} ${card.name}!`);
         delete game._newLibraryCard;
     }
+    if (game._returningPatron) {
+        const patron = game._returningPatron;
+        haptic('light');
+        showToast(`📇 Welcome back ${patron.emoji} ${patron.name}! (${patron.visits} visits)`);
+        delete game._returningPatron;
+    }
     if (game._cardMilestone) {
         const milestone = game._cardMilestone;
         haptic('success');
