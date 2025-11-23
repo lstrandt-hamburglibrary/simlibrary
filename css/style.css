@@ -113,6 +113,13 @@ body {
     color: var(--text-primary);
 }
 
+.version-tag {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
 .day-counter {
     font-size: 14px;
     font-weight: 600;

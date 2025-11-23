@@ -140,9 +140,25 @@ function init() {
 
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {
+        const APP_VERSION = 'v89';
+
+        // Check if we need to force update
+        const lastVersion = localStorage.getItem('sw-version');
+        if (lastVersion && lastVersion !== APP_VERSION) {
+            console.log('[PWA] Version mismatch, forcing SW update...');
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                registrations.forEach(reg => reg.unregister());
+            }).then(() => {
+                localStorage.setItem('sw-version', APP_VERSION);
+                window.location.reload();
+            });
+            return;
+        }
+
         navigator.serviceWorker.register('./sw.js')
             .then((registration) => {
                 console.log('[PWA] Service worker registered:', registration.scope);
+                localStorage.setItem('sw-version', APP_VERSION);
 
                 // Force update check
                 registration.update();

@@ -3,7 +3,7 @@
  * Enables offline play and caching
  */
 
-const CACHE_NAME = 'simlibrary-v84';
+const CACHE_NAME = 'simlibrary-v89';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -65,30 +65,50 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - network-first for HTML, cache-first for assets
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') {
     return;
   }
 
+  const isHTMLRequest = event.request.headers.get('accept')?.includes('text/html');
+  const isNavigationRequest = event.request.mode === 'navigate';
+
+  // Network-first for HTML/navigation (always get fresh index.html)
+  if (isHTMLRequest || isNavigationRequest) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          // Cache the fresh response
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+          return networkResponse;
+        })
+        .catch(() => {
+          // Offline - fall back to cache
+          return caches.match(event.request) || caches.match('./index.html');
+        })
+    );
+    return;
+  }
+
+  // Cache-first for assets (JS, CSS, images)
   event.respondWith(
     caches.match(event.request)
       .then((cachedResponse) => {
         if (cachedResponse) {
-          // Return cached version
           return cachedResponse;
         }
 
-        // Not in cache - fetch from network
         return fetch(event.request)
           .then((networkResponse) => {
-            // Don't cache non-successful responses
             if (!networkResponse || networkResponse.status !== 200) {
               return networkResponse;
             }
 
-            // Clone and cache the response
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME)
               .then((cache) => {
@@ -96,12 +116,6 @@ self.addEventListener('fetch', (event) => {
               });
 
             return networkResponse;
-          })
-          .catch(() => {
-            // Network failed - return offline fallback for HTML
-            if (event.request.headers.get('accept').includes('text/html')) {
-              return caches.match('./index.html');
-            }
           });
       })
   );
