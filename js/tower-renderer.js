@@ -288,9 +288,26 @@ class TowerRenderer {
         this.ctx.save();
         this.ctx.translate(0, this.scrollY);
 
+        // Separate basement from other floors
+        const basement = floors.find(f => f.typeId === 'basement');
+        const regularFloors = floors.filter(f => f.typeId !== 'basement');
+
+        // Calculate base Y offset - shift everything up if basement exists
+        const baseY = hasBasement ? this.height - 40 - this.floorHeight : this.height - 40;
+
+        // Store for use in other methods
+        this._currentBaseY = baseY;
+        this._hasBasement = hasBasement;
+
         // Draw ground
         this.ctx.fillStyle = '#8BC34A';
-        this.ctx.fillRect(0, this.height - 40, this.width, 40);
+        this.ctx.fillRect(0, baseY, this.width, 40);
+
+        // Draw underground area for basement
+        if (hasBasement) {
+            this.ctx.fillStyle = '#5D4037'; // Dark brown underground
+            this.ctx.fillRect(0, baseY + 40, this.width, this.floorHeight);
+        }
 
         // Update characters first (cleanup and animate)
         this.updateCharacters();
@@ -298,18 +315,14 @@ class TowerRenderer {
         // Draw elevator shaft
         this.drawElevatorShaft();
 
-        // Separate basement from other floors
-        const basement = floors.find(f => f.typeId === 'basement');
-        const regularFloors = floors.filter(f => f.typeId !== 'basement');
-
-        // Draw basement below lobby if it exists (one floor below ground)
+        // Draw basement below lobby if it exists
         if (basement) {
-            const basementY = this.height - 40 + this.floorHeight; // One floor below ground level
+            const basementY = baseY + 40; // Below ground level
             this.drawFloor(basement, this.floorX, basementY, -1);
         }
 
-        // Draw lobby floor at bottom (above basement)
-        const lobbyY = this.height - 40 - this.floorHeight;
+        // Draw lobby floor at bottom (above ground)
+        const lobbyY = baseY - this.floorHeight;
         this.drawLobby(this.floorX, lobbyY);
 
         // Draw floors (bottom to top) - only regular floors
@@ -345,14 +358,14 @@ class TowerRenderer {
                     }
 
                     const shiftedVisualIndex = reorderableFloors.length - 1 - shiftedIndex;
-                    const y = this.height - 40 - (shiftedVisualIndex + 2) * this.floorHeight;
+                    const y = baseY - (shiftedVisualIndex + 2) * this.floorHeight;
                     this.drawFloor(floor, this.floorX, y, shiftedVisualIndex);
                 }
             });
 
             // Draw the gap indicator where floor will drop
             const targetVisualIndex = reorderableFloors.length - 1 - targetIndex;
-            const gapY = this.height - 40 - (targetVisualIndex + 2) * this.floorHeight;
+            const gapY = baseY - (targetVisualIndex + 2) * this.floorHeight;
 
             this.ctx.save();
             // Subtle gap indicator
@@ -377,7 +390,7 @@ class TowerRenderer {
         } else {
             // Normal mode - draw floors in their actual positions
             floorsReversed.forEach((floor, index) => {
-                const y = this.height - 40 - (index + 2) * this.floorHeight;
+                const y = baseY - (index + 2) * this.floorHeight;
                 this.drawFloor(floor, this.floorX, y, index);
             });
         }
@@ -387,7 +400,7 @@ class TowerRenderer {
 
         // Draw "Build Floor" button at top
         if (this.game.floors.length < this.game.maxFloors) {
-            const buildY = this.height - 40 - (floorsReversed.length + 2) * this.floorHeight; // +2 for lobby
+            const buildY = baseY - (floorsReversed.length + 2) * this.floorHeight; // +2 for lobby
             this.drawBuildSlot(this.floorX, buildY);
         }
 
@@ -549,15 +562,15 @@ class TowerRenderer {
      * Draw elevator shaft
      */
     drawElevatorShaft() {
-        const numFloors = this.game.floors.length;
+        const numFloors = this.game.floors.filter(f => f.typeId !== 'basement').length;
+        const baseY = this._currentBaseY || this.height - 40;
 
         // Shaft always extends from ground to at least the lobby
         // If there are floors, it extends to the top floor
-        // Shaft goes from ground (height - 40) to top of highest floor
         const topY = numFloors === 0
-            ? this.height - 40 - this.floorHeight  // Just lobby
-            : this.height - 40 - (numFloors + 1) * this.floorHeight;  // +1 for lobby
-        const shaftHeight = (this.height - 40) - topY;
+            ? baseY - this.floorHeight  // Just lobby
+            : baseY - (numFloors + 1) * this.floorHeight;  // +1 for lobby
+        const shaftHeight = baseY - topY;
         const shaftY = topY;
 
         // Shaft background with gradient for depth
@@ -590,7 +603,7 @@ class TowerRenderer {
         this.ctx.strokeStyle = '#616161';
         this.ctx.lineWidth = 1;
         for (let i = 0; i <= numFloors; i++) {  // <= to include lobby marker
-            const markerY = this.height - 40 - (i * this.floorHeight);
+            const markerY = baseY - (i * this.floorHeight);
             this.ctx.beginPath();
             this.ctx.moveTo(this.elevatorX, markerY);
             this.ctx.lineTo(this.elevatorX + this.elevatorWidth, markerY);
@@ -614,12 +627,15 @@ class TowerRenderer {
             const floor = this.game.getFloor(reader.floorId);
             if (!floor) return;
 
-            const floors = [...this.game.floors].reverse();
+            const regularFloors = this.game.floors.filter(f => f.typeId !== 'basement');
+            const floors = [...regularFloors].reverse();
             const visualIndex = floors.findIndex(f => f.id === floor.id);
             if (visualIndex === -1) return;
 
+            const baseY = this._currentBaseY || this.height - 40;
+
             // Use EXACT same calculation as floor drawing to ensure alignment (+2 for lobby)
-            const destFloorY = this.height - 40 - (visualIndex + 2) * this.floorHeight;
+            const destFloorY = baseY - (visualIndex + 2) * this.floorHeight;
 
             // Calculate elevator timing based on visual floor position
             const floorsToTravel = visualIndex + 2; // +2 for lobby
@@ -629,7 +645,7 @@ class TowerRenderer {
             const progress = Math.min(1, Math.max(0, elapsed / totalTime));
 
             // Calculate Y position (ground to destination floor)
-            const groundY = this.height - 40;
+            const groundY = baseY;
             const elevatorY = groundY - (progress * (groundY - destFloorY)) - this.elevatorCarHeight;
 
             // Draw elevator car
@@ -2262,11 +2278,13 @@ class TowerRenderer {
         // We iterate from bottom floor (index 0) to top floor
         // and find which slot the drag Y position falls into
 
+        const baseY = this._currentBaseY || this.height - 40;
+
         for (let i = 0; i < numFloors; i++) {
             // Visual index for this array index
             const visualIndex = numFloors - 1 - i;
             // Y position of this floor slot (top edge)
-            const slotY = this.height - 40 - (visualIndex + 2) * this.floorHeight;
+            const slotY = baseY - (visualIndex + 2) * this.floorHeight;
             const slotBottom = slotY + this.floorHeight;
 
             // If drag position is within this slot's vertical range
@@ -2276,7 +2294,7 @@ class TowerRenderer {
         }
 
         // If above all floors, return top floor index
-        if (y < this.height - 40 - (numFloors + 1) * this.floorHeight) {
+        if (y < baseY - (numFloors + 1) * this.floorHeight) {
             return numFloors - 1;
         }
 
