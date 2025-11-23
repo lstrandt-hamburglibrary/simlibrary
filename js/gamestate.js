@@ -2442,6 +2442,47 @@ class GameState {
     }
 
     /**
+     * Get time until next weather change (in seconds)
+     */
+    getTimeUntilWeatherChange() {
+        return Math.max(0, Math.ceil((this.weather.nextChange - Date.now()) / 1000));
+    }
+
+    /**
+     * Get weather forecast (current + next few weather periods)
+     */
+    getWeatherForecast() {
+        const forecast = [];
+        const currentWeather = this.getCurrentWeather();
+        const timeUntilChange = this.getTimeUntilWeatherChange();
+
+        // Current weather
+        forecast.push({
+            weather: currentWeather,
+            timeLabel: `Now (${Math.floor(timeUntilChange / 60)}m ${timeUntilChange % 60}s remaining)`
+        });
+
+        // Generate next 3 weather predictions based on simple pattern
+        // Weather tends to follow patterns: sunny->cloudy->rainy->cloudy->sunny
+        const weatherOrder = ['sunny', 'cloudy', 'rainy', 'cloudy', 'sunny', 'snowy'];
+        let currentIndex = weatherOrder.indexOf(this.weather.current);
+        if (currentIndex === -1) currentIndex = 0;
+
+        for (let i = 1; i <= 3; i++) {
+            const nextIndex = (currentIndex + i) % weatherOrder.length;
+            const nextWeatherId = weatherOrder[nextIndex];
+            const nextWeather = this.weather.types.find(w => w.id === nextWeatherId);
+
+            forecast.push({
+                weather: nextWeather,
+                timeLabel: `+${i * 5} min`
+            });
+        }
+
+        return forecast;
+    }
+
+    /**
      * Get weather effect on mood
      */
     getWeatherMoodEffect() {

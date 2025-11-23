@@ -334,6 +334,80 @@ function setupEventListeners() {
             window.location.reload();
         }
     });
+
+    // Weather forecast click
+    document.getElementById('weather-emoji').addEventListener('click', () => {
+        haptic('light');
+        showWeatherForecast();
+    });
+}
+
+/**
+ * Show weather forecast popup
+ */
+function showWeatherForecast() {
+    const forecast = game.getWeatherForecast();
+
+    let forecastHtml = forecast.map((item, index) => {
+        const effects = [];
+        if (item.weather.moodEffect !== 0) {
+            effects.push(`Mood ${item.weather.moodEffect >= 0 ? '+' : ''}${item.weather.moodEffect}`);
+        }
+        if (item.weather.spawnEffect !== 1) {
+            effects.push(`Visitors ${Math.round(item.weather.spawnEffect * 100)}%`);
+        }
+        const effectText = effects.length > 0 ? effects.join(', ') : 'Normal';
+
+        return `
+            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; ${index === 0 ? 'font-weight: bold;' : 'opacity: 0.8;'}">
+                <span style="font-size: 24px;">${item.weather.emoji}</span>
+                <div>
+                    <div>${item.weather.name}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${item.timeLabel}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary);">${effectText}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    showToast(''); // Clear any existing toast
+
+    // Create a custom forecast popup
+    const popup = document.createElement('div');
+    popup.id = 'weather-forecast-popup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--card-bg);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        z-index: 10000;
+        min-width: 250px;
+    `;
+    popup.innerHTML = `
+        <h3 style="margin: 0 0 15px 0; text-align: center;">Weather Forecast</h3>
+        ${forecastHtml}
+        <button onclick="this.parentElement.remove()" style="
+            width: 100%;
+            margin-top: 15px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        ">Close</button>
+    `;
+
+    // Remove any existing popup
+    const existing = document.getElementById('weather-forecast-popup');
+    if (existing) existing.remove();
+
+    document.body.appendChild(popup);
 }
 
 /**
