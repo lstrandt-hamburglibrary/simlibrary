@@ -890,7 +890,8 @@ class TowerRenderer {
             this.ctx.arc(x, y, size * 1.2, 0, Math.PI * 2);
             this.ctx.fill();
 
-            // Draw item emoji
+            // Draw item emoji (reset fillStyle to ensure emoji renders in full color)
+            this.ctx.fillStyle = '#000000';
             this.ctx.font = `${Math.round(size)}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
