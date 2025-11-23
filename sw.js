@@ -95,28 +95,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for assets (JS, CSS, images)
+  // Stale-while-revalidate for assets (JS, CSS, images)
+  // Serve cached version immediately, but fetch fresh in background
   event.respondWith(
     caches.match(event.request)
       .then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        return fetch(event.request)
+        const fetchPromise = fetch(event.request)
           .then((networkResponse) => {
-            if (!networkResponse || networkResponse.status !== 200) {
-              return networkResponse;
+            if (networkResponse && networkResponse.status === 200) {
+              const responseToCache = networkResponse.clone();
+              caches.open(CACHE_NAME)
+                .then((cache) => {
+                  cache.put(event.request, responseToCache);
+                });
             }
-
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
             return networkResponse;
           });
+
+        // Return cached version immediately, update cache in background
+        return cachedResponse || fetchPromise;
       })
   );
 });

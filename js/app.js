@@ -140,38 +140,28 @@ function init() {
 
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {
-        const APP_VERSION = 'v89';
-
-        // Check if we need to force update
-        const lastVersion = localStorage.getItem('sw-version');
-        if (lastVersion && lastVersion !== APP_VERSION) {
-            console.log('[PWA] Version mismatch, forcing SW update...');
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                registrations.forEach(reg => reg.unregister());
-            }).then(() => {
-                localStorage.setItem('sw-version', APP_VERSION);
-                window.location.reload();
-            });
-            return;
-        }
-
         navigator.serviceWorker.register('./sw.js')
             .then((registration) => {
                 console.log('[PWA] Service worker registered:', registration.scope);
-                localStorage.setItem('sw-version', APP_VERSION);
 
                 // Force update check
                 registration.update();
+
+                // Check for updates periodically
+                setInterval(() => registration.update(), 60000); // Check every minute
 
                 // Check for updates
                 registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // New version available - reload to activate
+                            // New version available - notify and reload
                             console.log('[PWA] New version available! Reloading...');
                             newWorker.postMessage({ type: 'SKIP_WAITING' });
-                            window.location.reload();
+
+                            // Show brief notification then reload
+                            showToast('Updating to new version...');
+                            setTimeout(() => window.location.reload(), 1000);
                         }
                     });
                 });
