@@ -1248,6 +1248,14 @@ class GameState {
 
         // Create new floor - basement gets floorNumber 0, others get next slot
         const floorNumber = floorTypeId === 'basement' ? 0 : this.nextFloorSlot++;
+
+        // Apply construction VIP speed bonus if active
+        let buildTime = floorType.buildTime * 1000;
+        const buildSpeedMultiplier = this.getEventEffect('build_speed');
+        if (buildSpeedMultiplier > 1) {
+            buildTime = Math.floor(buildTime / buildSpeedMultiplier);
+        }
+
         const newFloor = {
             id: this.generateId(),
             floorNumber: floorNumber,
@@ -1257,7 +1265,7 @@ class GameState {
             color: floorType.color,
             status: 'building', // building, ready
             buildStartTime: Date.now(),
-            buildEndTime: Date.now() + (floorType.buildTime * 1000),
+            buildEndTime: Date.now() + buildTime,
             upgradeLevel: 1, // Floor upgrade level (1, 2, or 3)
             staff: [], // Hired staff (max 3, unlocks book categories)
             bookStock: floorType.bookCategories.map(cat => ({
@@ -1702,6 +1710,23 @@ class GameState {
             elevatorArrivalTime = Date.now();
         }
 
+        // Determine how many books to check out (1-3)
+        let booksToCheckout = 1;
+        const bookRoll = Math.random();
+        if (isVIP) {
+            // VIPs check out more books
+            if (bookRoll < 0.5) booksToCheckout = 2;
+            else if (bookRoll < 0.8) booksToCheckout = 3;
+        } else {
+            // Regular readers: 70% 1 book, 25% 2 books, 5% 3 books
+            if (bookRoll < 0.70) booksToCheckout = 1;
+            else if (bookRoll < 0.95) booksToCheckout = 2;
+            else booksToCheckout = 3;
+        }
+
+        // Cap by available stock
+        booksToCheckout = Math.min(booksToCheckout, cat.currentStock);
+
         // Create reader
         const reader = {
             id: this.generateId(),
@@ -1715,6 +1740,7 @@ class GameState {
             vipAbility: vipType ? vipType.ability : null,
             checkoutTime: checkoutTime,
             earningAmount: earningAmount,
+            booksToCheckout: booksToCheckout,
             elevatorState: elevatorState,
             elevatorArrivalTime: elevatorArrivalTime,
             usedStairs: !usesElevator
@@ -3468,12 +3494,13 @@ class GameState {
             if (now >= reader.checkoutTime) {
                 const floor = this.getFloor(reader.floorId);
                 if (floor && floor.bookStock[reader.categoryIndex]) {
-                    // Consume a book
-                    floor.bookStock[reader.categoryIndex].currentStock -= 1;
+                    // Consume books (1-3)
+                    const booksCheckedOut = reader.booksToCheckout || 1;
+                    floor.bookStock[reader.categoryIndex].currentStock -= booksCheckedOut;
 
-                    // Apply event star multiplier
+                    // Apply event star multiplier (multiply by books checked out)
                     const starMultiplier = this.getEventEffect('star_multiplier');
-                    let finalEarnings = Math.floor(reader.earningAmount * starMultiplier);
+                    let finalEarnings = Math.floor(reader.earningAmount * booksCheckedOut * starMultiplier);
 
                     // Apply Event Hall star bonus
                     const hallBonus = this.getHallEventEffect('star_bonus');
@@ -3541,7 +3568,7 @@ class GameState {
                     });
 
                     // Update stats
-                    this.stats.totalBooksCheckedOut += 1;
+                    this.stats.totalBooksCheckedOut += booksCheckedOut;
                     this.stats.totalStarsEarned += finalEarnings;
                     this.stats.totalReadersServed += 1;
 
