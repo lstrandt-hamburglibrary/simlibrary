@@ -2727,32 +2727,32 @@ class TowerRenderer {
 
                 for (let i = 0; i < 2; i++) {
                     const shelfX = shelfStartX + i * shelfSpacing;
-                    const shelfY = y + 45;
+                    const shelfY = y + 35; // Shifted up from 45
 
                     // Shelf unit
                     this.ctx.fillStyle = '#8D6E63';
-                    this.ctx.fillRect(shelfX, shelfY, shelfWidth, 55);
+                    this.ctx.fillRect(shelfX, shelfY, shelfWidth, 50); // Reduced height from 55
 
                     // Shelf dividers
                     this.ctx.fillStyle = '#6D4C41';
-                    this.ctx.fillRect(shelfX, shelfY + 18, shelfWidth, 3);
-                    this.ctx.fillRect(shelfX, shelfY + 36, shelfWidth, 3);
+                    this.ctx.fillRect(shelfX, shelfY + 16, shelfWidth, 3);
+                    this.ctx.fillRect(shelfX, shelfY + 33, shelfWidth, 3);
 
                     // Cleaning supplies on shelves
                     const fontSize = Math.max(10, Math.round(14 * this.getScale()));
                     this.ctx.font = `${fontSize}px Arial`;
-                    this.ctx.fillText('🧹', shelfX + shelfWidth * 0.17, shelfY + 15);
-                    this.ctx.fillText('🧴', shelfX + shelfWidth * 0.42, shelfY + 15);
-                    this.ctx.fillText('🪣', shelfX + shelfWidth * 0.67, shelfY + 15);
-                    this.ctx.fillText('🧽', shelfX + shelfWidth * 0.25, shelfY + 33);
-                    this.ctx.fillText('🧤', shelfX + shelfWidth * 0.58, shelfY + 33);
+                    this.ctx.fillText('🧹', shelfX + shelfWidth * 0.17, shelfY + 13);
+                    this.ctx.fillText('🧴', shelfX + shelfWidth * 0.42, shelfY + 13);
+                    this.ctx.fillText('🪣', shelfX + shelfWidth * 0.67, shelfY + 13);
+                    this.ctx.fillText('🧽', shelfX + shelfWidth * 0.25, shelfY + 30);
+                    this.ctx.fillText('🧤', shelfX + shelfWidth * 0.58, shelfY + 30);
                 }
 
                 // Mop and bucket
                 const bucketSize = Math.max(20, Math.round(30 * this.getScale()));
                 this.ctx.font = `${bucketSize}px Arial`;
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText('🪣', x + this.floorWidth * 0.88, y + 80);
+                this.ctx.fillText('🪣', x + this.floorWidth * 0.88, y + 65); // Shifted up from 80
 
                 // Draw concrete floor at bottom of basement
                 this.ctx.fillStyle = '#5D4E37';
