@@ -541,8 +541,8 @@ class TowerRenderer {
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
 
-        // Draw one large decoration in bottom left of lobby
-        const decoX = x + 50;
+        // Draw one large decoration centered in lobby
+        const decoX = x + this.floorWidth / 2;
         const decoY = y + this.floorHeight - 40;
         this.ctx.fillText(decoration, decoX, decoY);
 
