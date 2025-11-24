@@ -1293,7 +1293,8 @@ class GameState {
             trash: 0 // Trash level 0-100
         };
 
-        this.floors.push(newFloor);
+        // Add to beginning of array so new floors appear at top of tower
+        this.floors.unshift(newFloor);
 
         // Update stats
         this.stats.totalFloorsBuilt += 1;
