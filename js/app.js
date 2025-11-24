@@ -459,7 +459,7 @@ function showMoodBreakdown() {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: var(--card-bg);
+        background: #ffffff;
         padding: 20px;
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
@@ -468,6 +468,7 @@ function showMoodBreakdown() {
         max-width: 90%;
         max-height: 80vh;
         overflow-y: auto;
+        color: #333;
     `;
     popup.innerHTML = `
         <h3 style="margin: 0 0 5px 0; text-align: center;">${moodDesc.emoji} Mood: ${Math.floor(game.mood)}</h3>
