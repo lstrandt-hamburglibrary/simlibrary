@@ -527,31 +527,20 @@ class TowerRenderer {
      */
     drawHolidayDecorations(x, y) {
         const holiday = this.game.seasons?.currentHoliday;
-        if (!holiday || !holiday.decorations) return;
-
-        const lobbyDecor = holiday.decorations.lobby;
-        if (!lobbyDecor || lobbyDecor.length === 0) return;
+        if (!holiday || !holiday.decoration) return;
 
         const scale = this.getScale();
-        const fontSize = Math.max(14, Math.round(18 * scale));
-
-        // Holiday decoration positions in lobby (spread across top, smaller size)
-        const positions = [
-            { x: x + this.floorWidth * 0.2, y: y + 15 },  // Left of center
-            { x: x + this.floorWidth * 0.5, y: y + 15 },  // Center top
-            { x: x + this.floorWidth * 0.8, y: y + 15 },  // Right of center
-        ];
+        const fontSize = Math.max(36, Math.round(48 * scale));
 
         this.ctx.save();
         this.ctx.font = `${fontSize}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
 
-        lobbyDecor.forEach((emoji, index) => {
-            if (index >= positions.length) return;
-            const pos = positions[index];
-            this.ctx.fillText(emoji, pos.x, pos.y);
-        });
+        // Draw one large decoration centered in lobby
+        const centerX = x + this.floorWidth / 2;
+        const centerY = y + this.floorHeight / 2;
+        this.ctx.fillText(holiday.decoration, centerX, centerY);
 
         this.ctx.restore();
     }
