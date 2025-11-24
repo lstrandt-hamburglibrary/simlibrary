@@ -352,6 +352,28 @@ function setupEventListeners() {
         }
     });
 
+    // Export game button
+    document.getElementById('export-game-btn').addEventListener('click', () => {
+        haptic('medium');
+        exportGameSave();
+    });
+
+    // Import game button
+    document.getElementById('import-game-btn').addEventListener('click', () => {
+        haptic('medium');
+        document.getElementById('import-file-input').click();
+    });
+
+    // Import file input
+    document.getElementById('import-file-input').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            importGameSave(file);
+        }
+        // Reset file input so same file can be selected again
+        e.target.value = '';
+    });
+
     // Reset game button
     document.getElementById('reset-game-btn').addEventListener('click', async () => {
         const confirmed = await showConfirm(
@@ -2204,6 +2226,95 @@ function scrollToMiniQuest() {
 
     // Clamp to valid scroll range
     towerRenderer.scrollY = Math.max(0, Math.min(targetScrollY, towerRenderer.maxScrollY));
+}
+
+/**
+ * Export game save to file
+ */
+function exportGameSave() {
+    try {
+        // Get the saved data from localStorage
+        const saveData = localStorage.getItem('simLibrarySave');
+
+        if (!saveData) {
+            alert('No save data found to export!');
+            return;
+        }
+
+        // Create a Blob with the save data
+        const blob = new Blob([saveData], { type: 'application/json' });
+
+        // Create a download link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
+        a.download = `simlibrary-save-${timestamp}.json`;
+
+        // Trigger download
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('💾 Save exported successfully!');
+    } catch (error) {
+        console.error('Export error:', error);
+        alert('Failed to export save data. Please try again.');
+    }
+}
+
+/**
+ * Import game save from file
+ */
+async function importGameSave(file) {
+    try {
+        // Confirm before importing
+        const confirmed = await showConfirm(
+            'Import Save',
+            'This will replace your current save. Export your current save first if you want to keep it. Continue?'
+        );
+
+        if (!confirmed) return;
+
+        // Read the file
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+            try {
+                const saveData = e.target.result;
+
+                // Validate JSON
+                JSON.parse(saveData);
+
+                // Save to localStorage
+                localStorage.setItem('simLibrarySave', saveData);
+
+                showToast('📥 Save imported! Reloading...');
+
+                // Reload the page to apply the imported save
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+
+            } catch (error) {
+                console.error('Import parse error:', error);
+                alert('Invalid save file. Please select a valid SimLibrary save file.');
+            }
+        };
+
+        reader.onerror = () => {
+            alert('Failed to read file. Please try again.');
+        };
+
+        reader.readAsText(file);
+
+    } catch (error) {
+        console.error('Import error:', error);
+        alert('Failed to import save data. Please try again.');
+    }
 }
 
 // Initialize app when DOM is ready
