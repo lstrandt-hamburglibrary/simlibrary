@@ -1226,8 +1226,10 @@ class GameState {
      * Get available floor types (all types available, just need stars)
      */
     getAvailableFloorTypes() {
-        // Exclude basement - it's auto-created
-        return this.floorTypes.filter(t => t.id !== 'basement');
+        // Exclude basement - it's auto-created, sort by buildCost
+        return this.floorTypes
+            .filter(t => t.id !== 'basement')
+            .sort((a, b) => a.buildCost - b.buildCost);
     }
 
     /**
