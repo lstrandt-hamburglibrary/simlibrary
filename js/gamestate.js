@@ -2356,6 +2356,22 @@ class GameState {
                         floor: floor.name
                     });
                 }
+                if (floor.incidents.bugInfestation) {
+                    problems.push({
+                        emoji: '🐜',
+                        text: `${floor.name} has bugs`,
+                        detail: 'Needs Custodian',
+                        floor: floor.name
+                    });
+                }
+                if (floor.incidents.fireAlarm) {
+                    problems.push({
+                        emoji: '🚨',
+                        text: `${floor.name} fire alarm`,
+                        detail: 'Waiting to reset',
+                        floor: floor.name
+                    });
+                }
             }
         });
 
@@ -2570,7 +2586,9 @@ class GameState {
         const incidentTypes = [
             { id: 'powerOut', emoji: '⚡', name: 'Power outage', fixer: 'Electrician', hasFixer: hasElectrician, baseChance: 0.005 },
             { id: 'brokenWindow', emoji: '🪟', name: 'Broken window', fixer: 'Custodian', hasFixer: hasCustodian, baseChance: 0.003 },
-            { id: 'messySpill', emoji: '🤮', name: 'Messy spill', fixer: 'Custodian', hasFixer: hasCustodian, baseChance: 0.004 }
+            { id: 'messySpill', emoji: '🤮', name: 'Messy spill', fixer: 'Custodian', hasFixer: hasCustodian, baseChance: 0.004 },
+            { id: 'bugInfestation', emoji: '🐜', name: 'Bug infestation', fixer: 'Custodian', hasFixer: hasCustodian, baseChance: 0.002 },
+            { id: 'fireAlarm', emoji: '🚨', name: 'Fire alarm pulled', fixer: null, hasFixer: true, baseChance: 0.002 }
         ];
 
         // Check regular floors for incidents
@@ -2626,7 +2644,7 @@ class GameState {
                 }
             }
 
-            // Custodian fixes broken windows (45-90 seconds) and spills (20-40 seconds)
+            // Custodian fixes broken windows (45-90 seconds), spills (20-40 seconds), and bug infestations (60-90 seconds)
             if (hasCustodian) {
                 if (floor.incidents.brokenWindow) {
                     if (Date.now() - floor.incidents.brokenWindow.startTime > 45000 + Math.random() * 45000) {
@@ -2639,6 +2657,20 @@ class GameState {
                         delete floor.incidents.messySpill;
                         this._incidentFixed = { floor: floor.name, emoji: '🧹', type: 'Spill cleaned' };
                     }
+                }
+                if (floor.incidents.bugInfestation) {
+                    if (Date.now() - floor.incidents.bugInfestation.startTime > 60000 + Math.random() * 30000) {
+                        delete floor.incidents.bugInfestation;
+                        this._incidentFixed = { floor: floor.name, emoji: '🐜', type: 'Bugs exterminated' };
+                    }
+                }
+            }
+
+            // Fire alarm auto-resets (45-75 seconds)
+            if (floor.incidents.fireAlarm) {
+                if (Date.now() - floor.incidents.fireAlarm.startTime > 45000 + Math.random() * 30000) {
+                    delete floor.incidents.fireAlarm;
+                    this._incidentFixed = { floor: floor.name, emoji: '🚨', type: 'Alarm reset' };
                 }
             }
 

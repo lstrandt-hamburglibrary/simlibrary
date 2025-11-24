@@ -403,7 +403,7 @@ function showWeatherForecast() {
             padding: 10px;
             border: none;
             border-radius: 8px;
-            background: var(--primary);
+            background: #4a90d9;
             color: white;
             font-weight: bold;
             cursor: pointer;

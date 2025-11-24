@@ -844,6 +844,8 @@ class TowerRenderer {
         else if (floor.incidents.flooded) incidentEmoji = '🌊';
         else if (floor.incidents.brokenWindow) incidentEmoji = '🪟';
         else if (floor.incidents.messySpill) incidentEmoji = '🤮';
+        else if (floor.incidents.bugInfestation) incidentEmoji = '🐜';
+        else if (floor.incidents.fireAlarm) incidentEmoji = '🚨';
 
         // Draw incident emoji in center
         const fontSize = Math.max(24, Math.round(32 * scale));
