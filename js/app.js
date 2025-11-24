@@ -340,6 +340,12 @@ function setupEventListeners() {
         haptic('light');
         showWeatherForecast();
     });
+
+    // Mood breakdown click
+    document.querySelector('.mood-stat').addEventListener('click', () => {
+        haptic('light');
+        showMoodBreakdown();
+    });
 }
 
 /**
@@ -405,6 +411,83 @@ function showWeatherForecast() {
 
     // Remove any existing popup
     const existing = document.getElementById('weather-forecast-popup');
+    if (existing) existing.remove();
+
+    document.body.appendChild(popup);
+}
+
+/**
+ * Show mood breakdown popup
+ */
+function showMoodBreakdown() {
+    const breakdown = game.getMoodBreakdown();
+    const moodDesc = game.getMoodDescription();
+
+    let breakdownHtml = breakdown.map(item => {
+        let valueText = item.value >= 0 ? `+${item.value}` : `${item.value}`;
+        let color = item.type === 'positive' ? '#4CAF50' : item.type === 'negative' ? '#F44336' : '#888';
+
+        let detailsHtml = '';
+        if (item.details && item.details.length > 0) {
+            detailsHtml = `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">`;
+            if (item.details[0].count !== undefined) {
+                // Empty categories
+                detailsHtml += item.details.map(d => `${d.name}: ${d.count} empty`).join(', ');
+            } else if (item.details[0].trash !== undefined) {
+                // Dirty floors
+                detailsHtml += item.details.map(d => `${d.name}: ${d.trash}%`).join(', ');
+            }
+            detailsHtml += '</div>';
+        }
+
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.1);">
+                <div>
+                    <div>${item.label}</div>
+                    ${detailsHtml}
+                </div>
+                <span style="color: ${color}; font-weight: bold; white-space: nowrap;">${valueText}</span>
+            </div>
+        `;
+    }).join('');
+
+    // Create popup
+    const popup = document.createElement('div');
+    popup.id = 'mood-breakdown-popup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--card-bg);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        z-index: 10000;
+        min-width: 280px;
+        max-width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    `;
+    popup.innerHTML = `
+        <h3 style="margin: 0 0 5px 0; text-align: center;">${moodDesc.emoji} Mood: ${Math.floor(game.mood)}</h3>
+        <div style="text-align: center; margin-bottom: 15px; color: var(--text-secondary);">${moodDesc.text}</div>
+        ${breakdownHtml}
+        <button onclick="this.parentElement.remove()" style="
+            width: 100%;
+            margin-top: 15px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        ">Close</button>
+    `;
+
+    // Remove any existing popup
+    const existing = document.getElementById('mood-breakdown-popup');
     if (existing) existing.remove();
 
     document.body.appendChild(popup);
