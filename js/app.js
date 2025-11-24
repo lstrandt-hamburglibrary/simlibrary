@@ -580,6 +580,18 @@ function updateGlobalStats() {
         delete game._holidayEnded;
     }
 
+    // Check for incidents
+    if (game._newIncident) {
+        haptic('error');
+        showToast(`${game._newIncident.emoji} ${game._newIncident.type} at ${game._newIncident.floor}!`);
+        delete game._newIncident;
+    }
+    if (game._incidentFixed) {
+        haptic('success');
+        showToast(`${game._incidentFixed.emoji} ${game._incidentFixed.type} at ${game._incidentFixed.floor}`);
+        delete game._incidentFixed;
+    }
+
     // Check for book donations
     if (game._bookDonation) {
         const donation = game._bookDonation;

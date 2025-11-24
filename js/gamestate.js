@@ -1548,10 +1548,11 @@ class GameState {
      * Spawn a reader to visit a random ready floor
      */
     spawnReader() {
-        // Filter out floors with max trash (100) - readers won't visit dirty floors
+        // Filter out floors with max trash (100) or active incidents - readers won't visit
         const readyFloors = this.floors.filter(f =>
             f.status === 'ready' &&
-            (f.trash === undefined || f.trash < 100)
+            (f.trash === undefined || f.trash < 100) &&
+            (!f.incidents || Object.keys(f.incidents).length === 0)
         );
         if (readyFloors.length === 0) return null;
 
@@ -2320,6 +2321,44 @@ class GameState {
     getMoodProblems() {
         const problems = [];
 
+        // Check for incidents (power outage, floods, etc.)
+        this.floors.forEach(floor => {
+            if (floor.incidents) {
+                if (floor.incidents.powerOut) {
+                    problems.push({
+                        emoji: '⚡',
+                        text: `${floor.name} has no power`,
+                        detail: 'Needs Electrician',
+                        floor: floor.name
+                    });
+                }
+                if (floor.incidents.brokenWindow) {
+                    problems.push({
+                        emoji: '🪟',
+                        text: `${floor.name} has broken window`,
+                        detail: 'Needs Custodian',
+                        floor: floor.name
+                    });
+                }
+                if (floor.incidents.messySpill) {
+                    problems.push({
+                        emoji: '🤮',
+                        text: `${floor.name} has messy spill`,
+                        detail: 'Needs Custodian',
+                        floor: floor.name
+                    });
+                }
+                if (floor.incidents.flooded) {
+                    problems.push({
+                        emoji: '🌊',
+                        text: `${floor.name} is flooded`,
+                        detail: 'Needs Plumber',
+                        floor: floor.name
+                    });
+                }
+            }
+        });
+
         // Check for dirty floors
         this.floors.forEach(floor => {
             if (floor.status === 'ready' && floor.trash !== undefined && floor.trash > 30) {
@@ -2515,6 +2554,102 @@ class GameState {
                 floor.trash = Math.max(0, floor.trash - 2);
             }
         }
+    }
+
+    /**
+     * Check for random incidents and fix them with appropriate staff
+     */
+    checkIncidents() {
+        // Find basement staff
+        const basement = this.floors.find(f => f.typeId === 'basement' && f.status === 'ready');
+        const hasElectrician = basement && basement.staff.includes('Electrician');
+        const hasPlumber = basement && basement.staff.includes('Plumber');
+        const hasCustodian = basement && basement.staff.includes('Custodian');
+
+        // Incident types with their properties
+        const incidentTypes = [
+            { id: 'powerOut', emoji: '⚡', name: 'Power outage', fixer: 'Electrician', hasFixer: hasElectrician, baseChance: 0.005 },
+            { id: 'brokenWindow', emoji: '🪟', name: 'Broken window', fixer: 'Custodian', hasFixer: hasCustodian, baseChance: 0.003 },
+            { id: 'messySpill', emoji: '🤮', name: 'Messy spill', fixer: 'Custodian', hasFixer: hasCustodian, baseChance: 0.004 }
+        ];
+
+        // Check regular floors for incidents
+        this.floors.forEach(floor => {
+            if (floor.status === 'ready' && floor.typeId !== 'basement' && floor.typeId !== 'bathroom') {
+                // Initialize incidents object if needed
+                if (!floor.incidents) floor.incidents = {};
+
+                // Check for each incident type
+                incidentTypes.forEach(incident => {
+                    // Reduced chance if we have the fixer
+                    const chance = incident.hasFixer ? incident.baseChance * 0.1 : incident.baseChance;
+
+                    // Random chance of incident
+                    if (!floor.incidents[incident.id] && Math.random() < chance) {
+                        floor.incidents[incident.id] = { startTime: Date.now() };
+                        this._newIncident = {
+                            floor: floor.name,
+                            emoji: incident.emoji,
+                            type: incident.name
+                        };
+                    }
+                });
+            }
+        });
+
+        // Check bathrooms for floods (plumber fixes)
+        this.floors.forEach(floor => {
+            if (floor.status === 'ready' && floor.typeId === 'bathroom') {
+                if (!floor.incidents) floor.incidents = {};
+
+                const floodChance = hasPlumber ? 0.001 : 0.005;
+                if (!floor.incidents.flooded && Math.random() < floodChance) {
+                    floor.incidents.flooded = { startTime: Date.now() };
+                    this._newIncident = {
+                        floor: floor.name,
+                        emoji: '🌊',
+                        type: 'Bathroom flooded'
+                    };
+                }
+            }
+        });
+
+        // Staff fix incidents
+        this.floors.forEach(floor => {
+            if (!floor.incidents) return;
+
+            // Electrician fixes power outages
+            if (hasElectrician && floor.incidents.powerOut) {
+                if (Date.now() - floor.incidents.powerOut.startTime > 5000 + Math.random() * 5000) {
+                    delete floor.incidents.powerOut;
+                    this._incidentFixed = { floor: floor.name, emoji: '⚡', type: 'Power restored' };
+                }
+            }
+
+            // Custodian fixes broken windows and spills
+            if (hasCustodian) {
+                if (floor.incidents.brokenWindow) {
+                    if (Date.now() - floor.incidents.brokenWindow.startTime > 8000 + Math.random() * 7000) {
+                        delete floor.incidents.brokenWindow;
+                        this._incidentFixed = { floor: floor.name, emoji: '🪟', type: 'Window fixed' };
+                    }
+                }
+                if (floor.incidents.messySpill) {
+                    if (Date.now() - floor.incidents.messySpill.startTime > 3000 + Math.random() * 4000) {
+                        delete floor.incidents.messySpill;
+                        this._incidentFixed = { floor: floor.name, emoji: '🧹', type: 'Spill cleaned' };
+                    }
+                }
+            }
+
+            // Plumber fixes floods
+            if (hasPlumber && floor.incidents.flooded) {
+                if (Date.now() - floor.incidents.flooded.startTime > 6000 + Math.random() * 6000) {
+                    delete floor.incidents.flooded;
+                    this._incidentFixed = { floor: floor.name, emoji: '🔧', type: 'Flood fixed' };
+                }
+            }
+        });
     }
 
     /**
@@ -3857,6 +3992,9 @@ class GameState {
 
         // Run continuous cleaning (custodians clean throughout the day)
         this.runContinuousCleaning();
+
+        // Check for random incidents (power outages, floods, etc.)
+        this.checkIncidents();
 
         // Check for night cleaning (when day changes) - bonus deep clean
         const currentDay = this.getGameDay();
