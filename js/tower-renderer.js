@@ -2655,61 +2655,66 @@ class TowerRenderer {
 
         switch(floorType.id) {
             case 'bathroom':
-                // Draw bathroom stalls
+                // Draw bathroom stalls - scale with floor width
+                const scale = this.floorWidth / 500; // Base width is 500
+                const stallWidth = 80 * scale;
+                const stallSpacing = (this.floorWidth - 80 * scale) / 4; // Distribute 3 stalls evenly
+
                 for (let i = 0; i < 3; i++) {
-                    const stallX = x + 60 + i * 120;
+                    const stallX = x + stallSpacing * 0.5 + i * stallSpacing;
                     const stallY = y + 45;
 
                     // Stall walls
                     this.ctx.fillStyle = '#B0BEC5';
-                    this.ctx.fillRect(stallX, stallY, 80, 50);
+                    this.ctx.fillRect(stallX, stallY, stallWidth, 50);
 
                     // Stall door
                     this.ctx.fillStyle = '#90A4AE';
-                    this.ctx.fillRect(stallX + 10, stallY + 5, 60, 40);
+                    this.ctx.fillRect(stallX + 10 * scale, stallY + 5, stallWidth - 20 * scale, 40);
 
                     // Door handle
                     this.ctx.fillStyle = '#546E7A';
                     this.ctx.beginPath();
-                    this.ctx.arc(stallX + 60, stallY + 25, 3, 0, Math.PI * 2);
+                    this.ctx.arc(stallX + stallWidth - 20 * scale, stallY + 25, 3, 0, Math.PI * 2);
                     this.ctx.fill();
                 }
 
-                // Draw sink area (front view - compact)
-                const sinkX = x + this.floorWidth - 80;
+                // Draw sink area (front view - compact) - positioned relative to floor width
+                const sinkScale = scale;
+                const sinkX = x + this.floorWidth - 70 * sinkScale;
                 const sinkY = y + 48;
 
                 // Mirror above sink
                 this.ctx.fillStyle = '#E3F2FD';
-                this.ctx.fillRect(sinkX + 10, sinkY, 40, 20);
+                this.ctx.fillRect(sinkX + 5 * sinkScale, sinkY, 40 * sinkScale, 20);
                 this.ctx.strokeStyle = '#90A4AE';
                 this.ctx.lineWidth = 1;
-                this.ctx.strokeRect(sinkX + 10, sinkY, 40, 20);
+                this.ctx.strokeRect(sinkX + 5 * sinkScale, sinkY, 40 * sinkScale, 20);
 
                 // Sink pedestal/cabinet (front view)
                 this.ctx.fillStyle = '#ECEFF1';
-                this.ctx.fillRect(sinkX + 5, sinkY + 22, 50, 30);
+                this.ctx.fillRect(sinkX, sinkY + 22, 50 * sinkScale, 30);
 
                 // Cabinet door line
                 this.ctx.strokeStyle = '#B0BEC5';
                 this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
-                this.ctx.moveTo(sinkX + 30, sinkY + 25);
-                this.ctx.lineTo(sinkX + 30, sinkY + 48);
+                this.ctx.moveTo(sinkX + 25 * sinkScale, sinkY + 25);
+                this.ctx.lineTo(sinkX + 25 * sinkScale, sinkY + 48);
                 this.ctx.stroke();
 
                 // Door handles
                 this.ctx.fillStyle = '#78909C';
-                this.ctx.fillRect(sinkX + 24, sinkY + 35, 3, 6);
-                this.ctx.fillRect(sinkX + 33, sinkY + 35, 3, 6);
+                this.ctx.fillRect(sinkX + 19 * sinkScale, sinkY + 35, 3, 6);
+                this.ctx.fillRect(sinkX + 28 * sinkScale, sinkY + 35, 3, 6);
 
                 // Sink basin (front view - visible rim)
                 this.ctx.fillStyle = '#CFD8DC';
-                this.ctx.fillRect(sinkX + 10, sinkY + 20, 40, 5);
+                this.ctx.fillRect(sinkX + 5 * sinkScale, sinkY + 20, 40 * sinkScale, 5);
 
                 // Faucet
                 this.ctx.fillStyle = '#78909C';
-                this.ctx.fillRect(sinkX + 27, sinkY + 15, 6, 8);
+                this.ctx.fillRect(sinkX + 22 * sinkScale, sinkY + 15, 6, 8);
                 break;
 
             case 'basement':
