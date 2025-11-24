@@ -68,6 +68,14 @@ function init() {
         alert(`🎁 Day ${dailyReward.day} Login Bonus!\n+${dailyReward.stars} ⭐${bucksText}`);
     }
 
+    // Show tutorial on first launch
+    if (!localStorage.getItem('simlibrary_tutorial_seen')) {
+        setTimeout(() => {
+            openHelpModal();
+            localStorage.setItem('simlibrary_tutorial_seen', 'true');
+        }, 500);
+    }
+
     // Start game tick (every 1 second for responsive feel)
     setInterval(() => {
         game.tick();
@@ -283,6 +291,25 @@ function setupEventListeners() {
     document.getElementById('upgrades-modal').addEventListener('click', (e) => {
         if (e.target.id === 'upgrades-modal') {
             closeUpgradesModal();
+        }
+    });
+
+    // Help button - opens help modal
+    document.getElementById('open-help-btn').addEventListener('click', () => {
+        haptic('medium');
+        openHelpModal();
+    });
+
+    // Help modal close button
+    document.getElementById('close-help-modal').addEventListener('click', () => {
+        haptic('light');
+        closeHelpModal();
+    });
+
+    // Close help modal when clicking outside
+    document.getElementById('help-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'help-modal') {
+            closeHelpModal();
         }
     });
 
@@ -1634,6 +1661,20 @@ function openUpgradesModal() {
  */
 function closeUpgradesModal() {
     document.getElementById('upgrades-modal').classList.remove('active');
+}
+
+/**
+ * Open help modal
+ */
+function openHelpModal() {
+    document.getElementById('help-modal').classList.add('active');
+}
+
+/**
+ * Close help modal
+ */
+function closeHelpModal() {
+    document.getElementById('help-modal').classList.remove('active');
 }
 
 /**

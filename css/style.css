@@ -661,6 +661,37 @@ body {
     padding: 20px;
 }
 
+/* Help Content */
+.help-content {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.help-section {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.help-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.help-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.help-section p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
 /* ===================================
    Floor Type Cards (Build Modal)
    =================================== */
