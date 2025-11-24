@@ -36,14 +36,14 @@ class GameState {
 
         // Weather system
         this.weather = {
-            current: 'sunny',
+            current: 'rainy',
             nextChange: Date.now() + (5 * 60 * 1000), // Change every 5 minutes
             types: [
-                { id: 'sunny', name: 'Sunny', emoji: '☀️', moodEffect: 10, spawnEffect: 1.2 },
+                { id: 'sunny', name: 'Sunny', emoji: '☀️', moodEffect: 10, spawnEffect: 0.7 },
                 { id: 'cloudy', name: 'Cloudy', emoji: '☁️', moodEffect: 0, spawnEffect: 1.0 },
-                { id: 'rainy', name: 'Rainy', emoji: '🌧️', moodEffect: -10, spawnEffect: 0.7 },
-                { id: 'stormy', name: 'Stormy', emoji: '⛈️', moodEffect: -20, spawnEffect: 0.5 },
-                { id: 'snowy', name: 'Snowy', emoji: '❄️', moodEffect: 5, spawnEffect: 0.6 }
+                { id: 'rainy', name: 'Rainy', emoji: '🌧️', moodEffect: -5, spawnEffect: 1.3 },
+                { id: 'stormy', name: 'Stormy', emoji: '⛈️', moodEffect: -15, spawnEffect: 1.5 },
+                { id: 'snowy', name: 'Snowy', emoji: '❄️', moodEffect: 5, spawnEffect: 1.2 }
             ]
         };
 
@@ -2582,6 +2582,34 @@ class GameState {
         const hasPlumber = basement && basement.staff.includes('Plumber');
         const hasCustodian = basement && basement.staff.includes('Custodian');
 
+        // Check if there's already an active incident - only allow one at a time
+        const hasActiveIncident = this.floors.some(floor =>
+            floor.incidents && Object.keys(floor.incidents).length > 0
+        );
+
+        // Count regular floors (not basement/bathroom)
+        const regularFloorCount = this.floors.filter(f =>
+            f.status === 'ready' && f.typeId !== 'basement' && f.typeId !== 'bathroom'
+        ).length;
+
+        // No incidents until at least 4 floors are built
+        if (regularFloorCount < 4) {
+            // Still fix any existing incidents
+            this.floors.forEach(floor => {
+                if (!floor.incidents) return;
+                // ... fixing logic handled below
+            });
+            return;
+        }
+
+        // Cooldown between incidents (2-3 minutes after last incident was fixed)
+        if (!this._lastIncidentFixed) {
+            this._lastIncidentFixed = 0;
+        }
+        const timeSinceLastIncident = Date.now() - this._lastIncidentFixed;
+        const incidentCooldown = 120000 + Math.random() * 60000; // 2-3 minutes
+        const canSpawnIncident = timeSinceLastIncident > incidentCooldown;
+
         // Incident types with their properties
         const incidentTypes = [
             { id: 'powerOut', emoji: '⚡', name: 'Power outage', fixer: 'Electrician', hasFixer: hasElectrician, baseChance: 0.005 },
@@ -2591,46 +2619,49 @@ class GameState {
             { id: 'fireAlarm', emoji: '🚨', name: 'Fire alarm pulled', fixer: null, hasFixer: true, baseChance: 0.002 }
         ];
 
-        // Check regular floors for incidents
-        this.floors.forEach(floor => {
-            if (floor.status === 'ready' && floor.typeId !== 'basement' && floor.typeId !== 'bathroom') {
-                // Initialize incidents object if needed
-                if (!floor.incidents) floor.incidents = {};
+        // Only spawn new incidents if none are active and cooldown has passed
+        if (!hasActiveIncident && canSpawnIncident) {
+            // Check regular floors for incidents
+            this.floors.forEach(floor => {
+                if (floor.status === 'ready' && floor.typeId !== 'basement' && floor.typeId !== 'bathroom') {
+                    // Initialize incidents object if needed
+                    if (!floor.incidents) floor.incidents = {};
 
-                // Check for each incident type
-                incidentTypes.forEach(incident => {
-                    // Reduced chance if we have the fixer
-                    const chance = incident.hasFixer ? incident.baseChance * 0.1 : incident.baseChance;
+                    // Check for each incident type
+                    incidentTypes.forEach(incident => {
+                        // Reduced chance if we have the fixer
+                        const chance = incident.hasFixer ? incident.baseChance * 0.1 : incident.baseChance;
 
-                    // Random chance of incident
-                    if (!floor.incidents[incident.id] && Math.random() < chance) {
-                        floor.incidents[incident.id] = { startTime: Date.now() };
+                        // Random chance of incident
+                        if (!floor.incidents[incident.id] && Math.random() < chance) {
+                            floor.incidents[incident.id] = { startTime: Date.now() };
+                            this._newIncident = {
+                                floor: floor.name,
+                                emoji: incident.emoji,
+                                type: incident.name
+                            };
+                        }
+                    });
+                }
+            });
+
+            // Check bathrooms for floods (plumber fixes)
+            this.floors.forEach(floor => {
+                if (floor.status === 'ready' && floor.typeId === 'bathroom') {
+                    if (!floor.incidents) floor.incidents = {};
+
+                    const floodChance = hasPlumber ? 0.001 : 0.005;
+                    if (!floor.incidents.flooded && Math.random() < floodChance) {
+                        floor.incidents.flooded = { startTime: Date.now() };
                         this._newIncident = {
                             floor: floor.name,
-                            emoji: incident.emoji,
-                            type: incident.name
+                            emoji: '🌊',
+                            type: 'Bathroom flooded'
                         };
                     }
-                });
-            }
-        });
-
-        // Check bathrooms for floods (plumber fixes)
-        this.floors.forEach(floor => {
-            if (floor.status === 'ready' && floor.typeId === 'bathroom') {
-                if (!floor.incidents) floor.incidents = {};
-
-                const floodChance = hasPlumber ? 0.001 : 0.005;
-                if (!floor.incidents.flooded && Math.random() < floodChance) {
-                    floor.incidents.flooded = { startTime: Date.now() };
-                    this._newIncident = {
-                        floor: floor.name,
-                        emoji: '🌊',
-                        type: 'Bathroom flooded'
-                    };
                 }
-            }
-        });
+            });
+        }
 
         // Staff fix incidents
         this.floors.forEach(floor => {
@@ -2641,6 +2672,7 @@ class GameState {
                 if (Date.now() - floor.incidents.powerOut.startTime > 30000 + Math.random() * 30000) {
                     delete floor.incidents.powerOut;
                     this._incidentFixed = { floor: floor.name, emoji: '⚡', type: 'Power restored' };
+                    this._lastIncidentFixed = Date.now();
                 }
             }
 
@@ -2650,18 +2682,21 @@ class GameState {
                     if (Date.now() - floor.incidents.brokenWindow.startTime > 45000 + Math.random() * 45000) {
                         delete floor.incidents.brokenWindow;
                         this._incidentFixed = { floor: floor.name, emoji: '🪟', type: 'Window fixed' };
+                        this._lastIncidentFixed = Date.now();
                     }
                 }
                 if (floor.incidents.messySpill) {
                     if (Date.now() - floor.incidents.messySpill.startTime > 20000 + Math.random() * 20000) {
                         delete floor.incidents.messySpill;
                         this._incidentFixed = { floor: floor.name, emoji: '🧹', type: 'Spill cleaned' };
+                        this._lastIncidentFixed = Date.now();
                     }
                 }
                 if (floor.incidents.bugInfestation) {
                     if (Date.now() - floor.incidents.bugInfestation.startTime > 60000 + Math.random() * 30000) {
                         delete floor.incidents.bugInfestation;
                         this._incidentFixed = { floor: floor.name, emoji: '🐜', type: 'Bugs exterminated' };
+                        this._lastIncidentFixed = Date.now();
                     }
                 }
             }
@@ -2671,6 +2706,7 @@ class GameState {
                 if (Date.now() - floor.incidents.fireAlarm.startTime > 45000 + Math.random() * 30000) {
                     delete floor.incidents.fireAlarm;
                     this._incidentFixed = { floor: floor.name, emoji: '🚨', type: 'Alarm reset' };
+                    this._lastIncidentFixed = Date.now();
                 }
             }
 
@@ -2679,6 +2715,7 @@ class GameState {
                 if (Date.now() - floor.incidents.flooded.startTime > 60000 + Math.random() * 60000) {
                     delete floor.incidents.flooded;
                     this._incidentFixed = { floor: floor.name, emoji: '🔧', type: 'Flood fixed' };
+                    this._lastIncidentFixed = Date.now();
                 }
             }
         });
@@ -2717,8 +2754,8 @@ class GameState {
             const oldWeather = this.weather.current;
             const weatherTypes = this.weather.types;
 
-            // Weight towards sunny/cloudy, less chance of extreme weather
-            const weights = [0.3, 0.3, 0.2, 0.1, 0.1]; // sunny, cloudy, rainy, stormy, snowy
+            // Weight towards rainy/cloudy - libraries are busier when people want to stay indoors
+            const weights = [0.15, 0.25, 0.35, 0.15, 0.1]; // sunny, cloudy, rainy, stormy, snowy
             const random = Math.random();
             let cumulative = 0;
             let newWeatherIndex = 0;
