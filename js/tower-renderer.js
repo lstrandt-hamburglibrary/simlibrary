@@ -2663,7 +2663,7 @@ class TowerRenderer {
         this.ctx.fillStyle = '#666';
         this.ctx.font = '12px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText(floorType.bonus.description, centerX, y + 35);
+        this.ctx.fillText(floorType.bonus.description, centerX, y + 20);
 
         switch(floorType.id) {
             case 'bathroom':
