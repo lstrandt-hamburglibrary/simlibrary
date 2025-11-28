@@ -888,17 +888,17 @@ class TowerRenderer {
                 }
 
                 // Custom positioning for scifi floor (books on image shelves, no shelf sprite)
-                // Image is 2000px, floor renders at 500px, so multiply image coords by 0.25
+                // Image is 2000px, floor renders at 500px base, positions scale with screen
                 let scifiShelfY = shelfY;
                 if (floor.typeId === 'scifi') {
                     if (index === 0) {
-                        shelfX = x + 10; // Left shelf
+                        shelfX = x + 10 * scale; // Left shelf
                     } else if (index === 1) {
-                        shelfX = x + 302; // Center shelf
-                        scifiShelfY = shelfY - 26; // Moved up 26 total
+                        shelfX = x + 302 * scale; // Center shelf
+                        scifiShelfY = shelfY - 26 * scale; // Moved up 26 total
                     } else if (index === 2) {
-                        shelfX = x + 407; // Right shelf
-                        scifiShelfY = shelfY - 17; // Moved up 17
+                        shelfX = x + 407 * scale; // Right shelf
+                        scifiShelfY = shelfY - 17 * scale; // Moved up 17
                     }
                 }
 
