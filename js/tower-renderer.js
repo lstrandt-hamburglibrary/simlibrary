@@ -293,16 +293,6 @@ class TowerRenderer {
             console.error('Failed to load board books floor background');
         };
         floorBgImg.src = 'assets/floor-boardbooks.png';
-
-        // Load scifi floor background
-        const scifiBgImg = new Image();
-        scifiBgImg.onload = () => {
-            this.sprites.floorBackgrounds['scifi'] = scifiBgImg;
-        };
-        scifiBgImg.onerror = () => {
-            console.error('Failed to load scifi floor background');
-        };
-        scifiBgImg.src = 'assets/floor-scifi.png';
     }
 
     /**
@@ -887,24 +877,7 @@ class TowerRenderer {
                     }
                 }
 
-                // Custom positioning for scifi floor (books on image shelves, no shelf sprite)
-                // Use floorWidth ratio so positions scale correctly on any screen size
-                let scifiShelfY = shelfY;
-                if (floor.typeId === 'scifi') {
-                    const fw = this.floorWidth; // Current floor width (scales with screen)
-                    if (index === 0) {
-                        shelfX = x + fw * 0.02; // Left shelf (10/500 = 0.02)
-                    } else if (index === 1) {
-                        shelfX = x + fw * 0.604; // Center shelf (302/500 = 0.604)
-                        scifiShelfY = shelfY - fw * 0.052; // Moved up (26/500 = 0.052)
-                    } else if (index === 2) {
-                        shelfX = x + fw * 0.814; // Right shelf (407/500 = 0.814)
-                        scifiShelfY = shelfY - fw * 0.034; // Moved up (17/500 = 0.034)
-                    }
-                }
-
-                const finalShelfY = (floor.typeId === 'scifi') ? scifiShelfY : shelfY;
-                this.drawBookshelf(category, shelfX, finalShelfY, shelfWidth, shelfHeight, colors, floor.typeId, scale, index);
+                this.drawBookshelf(category, shelfX, shelfY, shelfWidth, shelfHeight, colors, floor.typeId, scale, index);
             });
         }
 
@@ -1158,42 +1131,20 @@ class TowerRenderer {
     drawBookshelf(category, x, y, width, height, colors, floorType, scale = 1, shelfIndex = 0) {
         // Use sprites if loaded, otherwise fall back to drawn shelves
         if (this.spritesLoaded && this.sprites.bookshelf) {
-            // Skip drawing bookshelf sprite for floors with custom background shelves
-            if (floorType !== 'scifi') {
-                // Draw bookshelf sprite
-                this.ctx.drawImage(this.sprites.bookshelf, x, y, width, height);
-            }
+            // Draw bookshelf sprite
+            this.ctx.drawImage(this.sprites.bookshelf, x, y, width, height);
 
             // Draw books based on stock level
             const stockPercent = category.currentStock / category.maxStock;
+            const bookCount = Math.ceil(stockPercent * 20); // 2 rows x 10 books = 20 max
 
-            // Custom book layout for scifi floor (3 rows, 7 books per row)
-            let bookCount, booksPerRow, bookStartX, bookStartY, rowSpacing;
             const bookWidth = 10 * scale;
             const bookHeight = 22 * scale;
             const bookSpacingX = 11 * scale;
-
-            if (floorType === 'scifi') {
-                booksPerRow = 6;
-                bookStartX = x + 8 * scale;
-                bookStartY = y + 5 * scale;
-                rowSpacing = 26 * scale;
-                // Left shelf (index 0) gets 2 rows with 11 books each, others get 3 rows with 6
-                if (shelfIndex === 0) {
-                    booksPerRow = 11;
-                    bookCount = Math.ceil(stockPercent * 22); // 2 rows x 11 = 22
-                } else if (shelfIndex === 1) {
-                    bookCount = Math.ceil(stockPercent * 18); // 3 rows x 6 = 18
-                } else {
-                    bookCount = Math.ceil(stockPercent * 18); // 3 rows x 6 = 18
-                }
-            } else {
-                bookCount = Math.ceil(stockPercent * 20); // 2 rows x 10 books = 20 max
-                booksPerRow = 10;
-                bookStartX = x + 5 * scale;
-                bookStartY = y + 10 * scale;
-                rowSpacing = 24 * scale;
-            }
+            const booksPerRow = 10;
+            const bookStartX = x + 5 * scale;
+            const bookStartY = y + 10 * scale;
+            const rowSpacing = 24 * scale;
 
             // Only draw books if we have sprites loaded
             if (this.sprites.books.length === 0) return;
