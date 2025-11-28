@@ -37,6 +37,9 @@ class TowerRenderer {
         // Character sprites
         this.characters = []; // Active character animations
 
+        // Ambient wandering bitizens (one per floor)
+        this.wanderers = []; // { floorId, x, targetX, direction, style, animationFrame }
+
         // Particle effects
         this.particles = []; // Star particles, sparkles, etc.
 
@@ -1282,6 +1285,33 @@ class TowerRenderer {
             // Draw character
             this.drawCharacter(char, floorY, reader);
         });
+
+        // Draw wandering bitizen for this floor
+        this.drawWanderer(floor, floorX, floorY);
+    }
+
+    /**
+     * Draw wandering ambient bitizen on a floor
+     */
+    drawWanderer(floor, floorX, floorY) {
+        const wanderer = this.wanderers.find(w => w.floorId === floor.id);
+        if (!wanderer) return;
+
+        // Create a char-like object to reuse drawCharacter
+        const char = {
+            x: floorX + wanderer.x,
+            state: wanderer.state === 'walking' ? 'walking' : 'reading',
+            animationFrame: wanderer.animationFrame,
+            style: wanderer.style
+        };
+
+        // Create a fake reader object for drawCharacter
+        const fakeReader = {
+            type: 'wanderer',
+            isRegular: false
+        };
+
+        this.drawCharacter(char, floorY, fakeReader);
     }
 
     /**
@@ -1692,6 +1722,96 @@ class TowerRenderer {
 
             char.animationFrame++;
         });
+
+        // Update wandering bitizens
+        this.updateWanderers();
+    }
+
+    /**
+     * Update wandering ambient bitizens
+     */
+    updateWanderers() {
+        const scale = this.getScale();
+
+        // Only some floors get wanderers (about 30% chance per floor)
+        this.game.floors.forEach(floor => {
+            if (floor.status !== 'ready') return;
+
+            let wanderer = this.wanderers.find(w => w.floorId === floor.id);
+
+            if (!wanderer) {
+                // Only 30% of floors get a wanderer
+                if (Math.random() > 0.3) return;
+
+                // Create a new wanderer for this floor
+                const startX = 50 * scale + Math.random() * (this.floorWidth - 100 * scale);
+                wanderer = {
+                    floorId: floor.id,
+                    x: startX,
+                    targetX: startX,
+                    direction: Math.random() > 0.5 ? 1 : -1,
+                    walkSpeed: (0.3 + Math.random() * 0.3) * scale,
+                    animationFrame: Math.floor(Math.random() * 100),
+                    state: 'idle',
+                    idleTimer: 60 + Math.floor(Math.random() * 120),
+                    style: this.generateWandererStyle()
+                };
+                this.wanderers.push(wanderer);
+            }
+
+            // Update wanderer behavior
+            if (wanderer.state === 'idle') {
+                wanderer.idleTimer--;
+                if (wanderer.idleTimer <= 0) {
+                    // Start walking to a new spot
+                    wanderer.state = 'walking';
+                    const minX = 50 * scale;
+                    const maxX = this.floorWidth - 50 * scale;
+                    wanderer.targetX = minX + Math.random() * (maxX - minX);
+                }
+            } else if (wanderer.state === 'walking') {
+                // Move towards target
+                if (Math.abs(wanderer.x - wanderer.targetX) < 2) {
+                    wanderer.state = 'idle';
+                    wanderer.idleTimer = 60 + Math.floor(Math.random() * 180);
+                } else if (wanderer.x < wanderer.targetX) {
+                    wanderer.x += wanderer.walkSpeed;
+                    wanderer.direction = 1;
+                } else {
+                    wanderer.x -= wanderer.walkSpeed;
+                    wanderer.direction = -1;
+                }
+            }
+
+            wanderer.animationFrame++;
+        });
+
+        // Remove wanderers for floors that no longer exist
+        this.wanderers = this.wanderers.filter(w =>
+            this.game.floors.some(f => f.id === w.floorId && f.status === 'ready')
+        );
+    }
+
+    /**
+     * Generate random style for a wandering bitizen (matches reader style format)
+     */
+    generateWandererStyle() {
+        const skinTones = ['#FDBCB4', '#F4C2A6', '#E8B89A', '#D2B48C', '#C68642', '#8D5524'];
+        const shirtColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#DDA0DD', '#98D8C8', '#F7DC6F', '#9370DB', '#2ECC71', '#E74C3C'];
+        const pantsColors = ['#2C3E50', '#34495E', '#4A4A4A', '#5C4033', '#1A5276', '#7B3F00'];
+        const hairColors = ['#2C1810', '#8B4513', '#4A3728', '#654321', '#000000', '#A0522D', '#CCCCCC'];
+        const hairStyles = ['short', 'long', 'curly', 'bald'];
+
+        return {
+            skinColor: skinTones[Math.floor(Math.random() * skinTones.length)],
+            shirtColor: shirtColors[Math.floor(Math.random() * shirtColors.length)],
+            pantsColor: pantsColors[Math.floor(Math.random() * pantsColors.length)],
+            hairColor: hairColors[Math.floor(Math.random() * hairColors.length)],
+            hairStyle: hairStyles[Math.floor(Math.random() * hairStyles.length)],
+            hasPattern: Math.random() > 0.7,
+            patternColor: '#FFF',
+            hasGlasses: Math.random() > 0.75
+        };
     }
 
     /**

@@ -1990,3 +1990,176 @@ body {
     border-radius: 4px;
     font-size: 10px;
 }
+
+/* ===================================
+   Onboarding Tutorial
+   =================================== */
+
+.onboarding-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.onboarding-overlay.active {
+    display: block;
+}
+
+.onboarding-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    pointer-events: auto;
+}
+
+.onboarding-spotlight {
+    position: absolute;
+    border-radius: 12px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.onboarding-tooltip {
+    position: absolute;
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    max-width: 300px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+    animation: tooltipBounce 0.3s ease;
+}
+
+@keyframes tooltipBounce {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.onboarding-tooltip::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: white;
+    transform: rotate(45deg);
+}
+
+.onboarding-tooltip.arrow-top::before {
+    top: -8px;
+    left: 50%;
+    margin-left: -8px;
+}
+
+.onboarding-tooltip.arrow-bottom::before {
+    bottom: -8px;
+    left: 50%;
+    margin-left: -8px;
+}
+
+.onboarding-tooltip.arrow-left::before {
+    left: -8px;
+    top: 50%;
+    margin-top: -8px;
+}
+
+.onboarding-tooltip.arrow-right::before {
+    right: -8px;
+    top: 50%;
+    margin-top: -8px;
+}
+
+.onboarding-step-indicator {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    justify-content: center;
+}
+
+.onboarding-step-indicator .step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #E0E0E0;
+    transition: all 0.2s;
+}
+
+.onboarding-step-indicator .step-dot.active {
+    background: var(--lavender);
+    transform: scale(1.2);
+}
+
+.onboarding-step-indicator .step-dot.completed {
+    background: var(--mint);
+}
+
+.onboarding-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.onboarding-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.onboarding-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+    gap: 12px;
+}
+
+.onboarding-skip {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px 12px;
+}
+
+.onboarding-skip:hover {
+    color: var(--text-primary);
+}
+
+.onboarding-next {
+    background: var(--gradient-lavender);
+    border: none;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: bold;
+    padding: 10px 24px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.onboarding-next:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.onboarding-highlight {
+    position: relative;
+    z-index: 2001;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(225, 190, 231, 0.7); }
+    50% { box-shadow: 0 0 0 10px rgba(225, 190, 231, 0); }
+}

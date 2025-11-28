@@ -68,11 +68,10 @@ function init() {
         alert(`🎁 Day ${dailyReward.day} Login Bonus!\n+${dailyReward.stars} ⭐${bucksText}`);
     }
 
-    // Show tutorial on first launch
-    if (!localStorage.getItem('simlibrary_tutorial_seen')) {
+    // Show onboarding tutorial on first launch
+    if (!localStorage.getItem('simlibrary_onboarding_complete')) {
         setTimeout(() => {
-            openHelpModal();
-            localStorage.setItem('simlibrary_tutorial_seen', 'true');
+            startOnboarding();
         }, 500);
     }
 
@@ -2316,6 +2315,217 @@ async function importGameSave(file) {
         alert('Failed to import save data. Please try again.');
     }
 }
+
+// ===================================
+// Onboarding Tutorial System
+// ===================================
+
+const onboardingSteps = [
+    {
+        id: 'welcome',
+        title: '📚 Welcome to SimLibrary!',
+        text: 'Build your dream library floor by floor, attract readers, and earn stars! Let me show you around.',
+        target: null, // No specific target, center of screen
+        position: 'center'
+    },
+    {
+        id: 'stars',
+        title: '⭐ Stars',
+        text: 'This is your currency. Use stars to build new floors and upgrade your library.',
+        target: '.stats-bar',
+        position: 'bottom'
+    },
+    {
+        id: 'tower',
+        title: '🏛️ Your Library Tower',
+        text: 'This is your library! Tap on any floor to see details, hire staff, and upgrade it.',
+        target: '#tower-canvas',
+        position: 'top'
+    },
+    {
+        id: 'build',
+        title: '🏗️ Build New Floors',
+        text: 'Tap here to add new floors to your library. Each floor type attracts different readers!',
+        target: '#tower-canvas', // We'll position near the build slot
+        position: 'top',
+        customTarget: 'buildSlot'
+    },
+    {
+        id: 'readers',
+        title: '👥 Readers',
+        text: 'Readers will visit your floors and check out books. The longer they browse, the more books they take!',
+        target: null,
+        position: 'center'
+    },
+    {
+        id: 'missions',
+        title: '📋 Missions',
+        text: 'Complete missions to earn bonus stars and Tower Bucks. Watch for the mission banner at the top of the screen!',
+        target: null,
+        position: 'center'
+    },
+    {
+        id: 'stats',
+        title: '📊 Library Stats',
+        text: 'Tap here to see your collection, achievements, and detailed statistics.',
+        target: '#open-stats-btn',
+        position: 'bottom'
+    },
+    {
+        id: 'upgrades',
+        title: '🏛️ Upgrades & Perks',
+        text: 'Tap here to buy decorations, unlock perks, and train your staff.',
+        target: '#open-upgrades-btn',
+        position: 'bottom'
+    },
+    {
+        id: 'ready',
+        title: '🎉 You\'re Ready!',
+        text: 'Start building your library empire! Tap floors to manage them, and have fun!',
+        target: null,
+        position: 'center'
+    }
+];
+
+let currentOnboardingStep = 0;
+let onboardingActive = false;
+
+function startOnboarding() {
+    currentOnboardingStep = 0;
+    onboardingActive = true;
+    document.getElementById('onboarding-overlay').classList.add('active');
+    showOnboardingStep(0);
+}
+
+function showOnboardingStep(stepIndex) {
+    const step = onboardingSteps[stepIndex];
+    if (!step) {
+        endOnboarding();
+        return;
+    }
+
+    const overlay = document.getElementById('onboarding-overlay');
+    const spotlight = overlay.querySelector('.onboarding-spotlight');
+    const tooltip = overlay.querySelector('.onboarding-tooltip');
+    const title = tooltip.querySelector('.onboarding-title');
+    const text = tooltip.querySelector('.onboarding-text');
+    const indicator = tooltip.querySelector('.onboarding-step-indicator');
+    const nextBtn = tooltip.querySelector('.onboarding-next');
+
+    // Update step indicator dots
+    indicator.innerHTML = onboardingSteps.map((_, i) => {
+        let className = 'step-dot';
+        if (i < stepIndex) className += ' completed';
+        if (i === stepIndex) className += ' active';
+        return `<span class="${className}"></span>`;
+    }).join('');
+
+    // Update content
+    title.textContent = step.title;
+    text.textContent = step.text;
+
+    // Update button text for last step
+    nextBtn.textContent = stepIndex === onboardingSteps.length - 1 ? 'Start Playing!' : 'Next';
+
+    // Remove previous arrow classes
+    tooltip.classList.remove('arrow-top', 'arrow-bottom', 'arrow-left', 'arrow-right');
+
+    // Position tooltip and spotlight
+    if (step.target && step.position !== 'center') {
+        const targetEl = document.querySelector(step.target);
+        if (targetEl) {
+            const rect = targetEl.getBoundingClientRect();
+
+            // Position spotlight
+            spotlight.style.display = 'block';
+            spotlight.style.left = (rect.left - 8) + 'px';
+            spotlight.style.top = (rect.top - 8) + 'px';
+            spotlight.style.width = (rect.width + 16) + 'px';
+            spotlight.style.height = (rect.height + 16) + 'px';
+
+            // Position tooltip based on position preference
+            const tooltipRect = tooltip.getBoundingClientRect();
+            let tooltipLeft, tooltipTop;
+
+            switch (step.position) {
+                case 'bottom':
+                    tooltipLeft = rect.left + rect.width / 2 - 150;
+                    tooltipTop = rect.bottom + 20;
+                    tooltip.classList.add('arrow-top');
+                    break;
+                case 'top':
+                    tooltipLeft = rect.left + rect.width / 2 - 150;
+                    tooltipTop = rect.top - 200;
+                    tooltip.classList.add('arrow-bottom');
+                    break;
+                case 'left':
+                    tooltipLeft = rect.left - 320;
+                    tooltipTop = rect.top + rect.height / 2 - 80;
+                    tooltip.classList.add('arrow-right');
+                    break;
+                case 'right':
+                    tooltipLeft = rect.right + 20;
+                    tooltipTop = rect.top + rect.height / 2 - 80;
+                    tooltip.classList.add('arrow-left');
+                    break;
+            }
+
+            // Keep tooltip on screen
+            tooltipLeft = Math.max(10, Math.min(tooltipLeft, window.innerWidth - 320));
+            tooltipTop = Math.max(10, Math.min(tooltipTop, window.innerHeight - 220));
+
+            tooltip.style.left = tooltipLeft + 'px';
+            tooltip.style.top = tooltipTop + 'px';
+        } else {
+            // Target not found, center it
+            centerTooltip(spotlight, tooltip);
+        }
+    } else {
+        // Center position
+        centerTooltip(spotlight, tooltip);
+    }
+}
+
+function centerTooltip(spotlight, tooltip) {
+    spotlight.style.display = 'none';
+    tooltip.style.left = '50%';
+    tooltip.style.top = '50%';
+    tooltip.style.transform = 'translate(-50%, -50%)';
+}
+
+function nextOnboardingStep() {
+    const tooltip = document.querySelector('.onboarding-tooltip');
+    tooltip.style.transform = ''; // Reset transform for positioned tooltips
+
+    currentOnboardingStep++;
+    if (currentOnboardingStep >= onboardingSteps.length) {
+        endOnboarding();
+    } else {
+        showOnboardingStep(currentOnboardingStep);
+    }
+}
+
+function skipOnboarding() {
+    endOnboarding();
+}
+
+function endOnboarding() {
+    onboardingActive = false;
+    document.getElementById('onboarding-overlay').classList.remove('active');
+    localStorage.setItem('simlibrary_onboarding_complete', 'true');
+
+    // Also mark old tutorial as seen for backwards compat
+    localStorage.setItem('simlibrary_tutorial_seen', 'true');
+}
+
+// Set up onboarding event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const overlay = document.getElementById('onboarding-overlay');
+    if (overlay) {
+        overlay.querySelector('.onboarding-next').addEventListener('click', nextOnboardingStep);
+        overlay.querySelector('.onboarding-skip').addEventListener('click', skipOnboarding);
+    }
+});
 
 // Initialize app when DOM is ready
 if (document.readyState === 'loading') {
