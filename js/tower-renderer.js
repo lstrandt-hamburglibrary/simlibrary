@@ -1147,17 +1147,16 @@ class TowerRenderer {
             // Only draw books if we have sprites loaded
             if (this.sprites.books.length === 0) return;
 
-            // Pick 3 book colors based on floor position
+            // Pick 2 book colors based on floor position
             // Use absolute value since y is negative for floors above ground
             const floorIndex = Math.abs(Math.floor(y / 110)); // 110 is floor height
 
-            // Each floor gets 3 consecutive colors, wrapping around
+            // Each floor gets 2 consecutive colors, wrapping around
             const numBooks = this.sprites.books.length;
-            const startColor = (floorIndex * 3) % numBooks;
+            const startColor = (floorIndex * 2) % numBooks;
             const shelfColors = [
                 this.sprites.books[startColor % numBooks],
-                this.sprites.books[(startColor + 1) % numBooks],
-                this.sprites.books[(startColor + 2) % numBooks]
+                this.sprites.books[(startColor + 1) % numBooks]
             ];
 
             // Draw book sprites in multiple rows
@@ -2718,11 +2717,11 @@ class TowerRenderer {
     drawUtilityRoom(floor, x, y, colors, floorType) {
         const centerX = x + this.floorWidth / 2;
 
-        // Draw bonus description
+        // Draw bonus description (below the floor title)
         this.ctx.fillStyle = '#666';
         this.ctx.font = '12px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText(floorType.bonus.description, centerX, y + 20);
+        this.ctx.fillText(floorType.bonus.description, centerX, y + 32);
 
         switch(floorType.id) {
             case 'bathroom':

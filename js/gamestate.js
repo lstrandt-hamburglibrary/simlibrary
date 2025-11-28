@@ -1686,7 +1686,8 @@ class GameState {
         }
 
         // Calculate browse time and earnings based on VIP ability
-        let browseTime = 8000; // Default 8 seconds of browsing AFTER arrival
+        // Base browse time varies between 4-12 seconds
+        let browseTime = 4000 + Math.floor(Math.random() * 8000);
 
         // Apply event browse time multiplier
         browseTime = Math.floor(browseTime * this.getEventEffect('browse_time'));
@@ -1725,20 +1726,13 @@ class GameState {
             elevatorArrivalTime = Date.now();
         }
 
-        // Determine how many books to check out (1-3)
-        let booksToCheckout = 1;
-        const bookRoll = Math.random();
+        // Determine how many books to check out based on browse time
+        // Base: 1 book per 4 seconds of browsing, minimum 1 book
+        let booksToCheckout = Math.max(1, Math.floor(browseTime / 4000));
+
+        // VIPs get a bonus book
         if (isVIP) {
-            // VIPs check out more books: 30% 2 books, 40% 3 books, 30% 4 books
-            if (bookRoll < 0.3) booksToCheckout = 2;
-            else if (bookRoll < 0.7) booksToCheckout = 3;
-            else booksToCheckout = 4;
-        } else {
-            // Regular readers: 40% 1 book, 35% 2 books, 20% 3 books, 5% 4 books
-            if (bookRoll < 0.40) booksToCheckout = 1;
-            else if (bookRoll < 0.75) booksToCheckout = 2;
-            else if (bookRoll < 0.95) booksToCheckout = 3;
-            else booksToCheckout = 4;
+            booksToCheckout += 1;
         }
 
         // Cap by available stock
