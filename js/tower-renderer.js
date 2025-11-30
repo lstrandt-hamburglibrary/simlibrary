@@ -21,7 +21,7 @@ class TowerRenderer {
         this.ctx.scale(dpr, dpr);
 
         // Floor dimensions
-        this.floorHeight = 110;
+        this.floorHeight = 130;
         this.floorWidth = 500;
         this.floorX = (this.width - this.floorWidth) / 2; // Center horizontally
 
@@ -150,7 +150,7 @@ class TowerRenderer {
             // Center the floor horizontally
             this.floorX = (displayWidth - this.floorWidth) / 2;
             // Shorter floors on desktop (width > 500), taller on mobile
-            const baseFloorHeight = displayWidth > 500 ? 110 : 140;
+            const baseFloorHeight = displayWidth > 500 ? 130 : 160;
             this.floorHeight = baseFloorHeight * this.scale;
             this.elevatorWidth = 40 * this.scale;
             this.elevatorX = 5 * this.scale;
@@ -293,6 +293,36 @@ class TowerRenderer {
             console.error('Failed to load board books floor background');
         };
         floorBgImg.src = 'assets/floor-boardbooks.png';
+
+        // Load bathroom floor background
+        const bathroomBgImg = new Image();
+        bathroomBgImg.onload = () => {
+            this.sprites.floorBackgrounds['bathroom'] = bathroomBgImg;
+        };
+        bathroomBgImg.onerror = () => {
+            console.error('Failed to load bathroom floor background');
+        };
+        bathroomBgImg.src = 'assets/floor-restroom.png';
+
+        // Load picture books floor background
+        const pictureBooksBgImg = new Image();
+        pictureBooksBgImg.onload = () => {
+            this.sprites.floorBackgrounds['picture_books'] = pictureBooksBgImg;
+        };
+        pictureBooksBgImg.onerror = () => {
+            console.error('Failed to load picture books floor background');
+        };
+        pictureBooksBgImg.src = 'assets/floor-picture-books.png';
+
+        // Load scifi floor background
+        const scifiBgImg = new Image();
+        scifiBgImg.onload = () => {
+            this.sprites.floorBackgrounds['scifi'] = scifiBgImg;
+        };
+        scifiBgImg.onerror = () => {
+            console.error('Failed to load scifi floor background');
+        };
+        scifiBgImg.src = 'assets/floor-scifi.png';
     }
 
     /**
@@ -855,7 +885,7 @@ class TowerRenderer {
         } else {
             // Draw book shelves (3 categories) - scale with floor size
             const scale = this.getScale();
-            const shelfY = y + 45; // Position to match custom floor backgrounds (moved up)
+            const shelfY = y + this.floorHeight - 65; // Position from bottom to stay consistent regardless of floor height
             const shelfWidth = 120 * scale;
             const shelfHeight = 60 * scale;
             const shelfSpacing = (this.floorWidth - 60 * scale - shelfWidth * 3) / 2;
@@ -2837,11 +2867,11 @@ class TowerRenderer {
     drawUtilityRoom(floor, x, y, colors, floorType) {
         const centerX = x + this.floorWidth / 2;
 
-        // Draw bonus description (below the floor title)
-        this.ctx.fillStyle = '#666';
-        this.ctx.font = '12px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText(floorType.bonus.description, centerX, y + 32);
+        // Draw custom floor background sprite if available
+        const floorBg = this.sprites.floorBackgrounds[floorType.id];
+        if (floorBg && floorBg.complete) {
+            this.ctx.drawImage(floorBg, x, y, this.floorWidth, this.floorHeight);
+        }
 
         switch(floorType.id) {
             case 'bathroom':
@@ -2854,27 +2884,29 @@ class TowerRenderer {
 
                 for (let i = 0; i < 3; i++) {
                     const stallX = stallStartX + i * (stallWidth + stallGap);
-                    const stallY = y + 35; // Shifted up from 45
+                    const stallY = y + 35;
+                    const stallHeight = this.floorHeight - 35; // Extend to floor bottom
 
                     // Stall walls
                     this.ctx.fillStyle = '#B0BEC5';
-                    this.ctx.fillRect(stallX, stallY, stallWidth, 50);
+                    this.ctx.fillRect(stallX, stallY, stallWidth, stallHeight);
 
                     // Stall door
                     this.ctx.fillStyle = '#90A4AE';
-                    this.ctx.fillRect(stallX + 5 * scale, stallY + 5, stallWidth - 10 * scale, 40);
+                    this.ctx.fillRect(stallX + 5 * scale, stallY + 5, stallWidth - 10 * scale, stallHeight - 10);
 
                     // Door handle
                     this.ctx.fillStyle = '#546E7A';
                     this.ctx.beginPath();
-                    this.ctx.arc(stallX + stallWidth - 10 * scale, stallY + 25, 3, 0, Math.PI * 2);
+                    this.ctx.arc(stallX + stallWidth - 10 * scale, stallY + (stallHeight / 2), 3, 0, Math.PI * 2);
                     this.ctx.fill();
                 }
 
                 // Draw sink area (front view - compact) - positioned after stalls
                 const sinkScale = scale;
                 const sinkX = x + this.floorWidth - 60 * sinkScale;
-                const sinkY = y + 38; // Shifted up from 48
+                const sinkY = y + 38;
+                const cabinetHeight = this.floorHeight - 38 - 22; // Extend cabinet to floor bottom
 
                 // Mirror above sink
                 this.ctx.fillStyle = '#E3F2FD';
@@ -2885,20 +2917,21 @@ class TowerRenderer {
 
                 // Sink pedestal/cabinet (front view)
                 this.ctx.fillStyle = '#ECEFF1';
-                this.ctx.fillRect(sinkX, sinkY + 22, 50 * sinkScale, 30);
+                this.ctx.fillRect(sinkX, sinkY + 22, 50 * sinkScale, cabinetHeight);
 
                 // Cabinet door line
                 this.ctx.strokeStyle = '#B0BEC5';
                 this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
                 this.ctx.moveTo(sinkX + 25 * sinkScale, sinkY + 25);
-                this.ctx.lineTo(sinkX + 25 * sinkScale, sinkY + 48);
+                this.ctx.lineTo(sinkX + 25 * sinkScale, y + this.floorHeight - 5);
                 this.ctx.stroke();
 
                 // Door handles
                 this.ctx.fillStyle = '#78909C';
-                this.ctx.fillRect(sinkX + 19 * sinkScale, sinkY + 35, 3, 6);
-                this.ctx.fillRect(sinkX + 28 * sinkScale, sinkY + 35, 3, 6);
+                const handleY = sinkY + 22 + (cabinetHeight / 2);
+                this.ctx.fillRect(sinkX + 19 * sinkScale, handleY, 3, 6);
+                this.ctx.fillRect(sinkX + 28 * sinkScale, handleY, 3, 6);
 
                 // Sink basin (front view - visible rim)
                 this.ctx.fillStyle = '#CFD8DC';

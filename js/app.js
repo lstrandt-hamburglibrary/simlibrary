@@ -905,6 +905,17 @@ function openFloorDetail(floorId) {
     document.getElementById('detail-emoji').textContent = floor.emoji;
     document.getElementById('detail-name').textContent = floor.name;
 
+    // Update bonus description for utility rooms
+    const bonusEl = document.getElementById('detail-bonus');
+    const floorType = game.floorTypes.find(ft => ft.id === floor.typeId);
+    if (floorType && floorType.bonus && floorType.bonus.description) {
+        bonusEl.textContent = floorType.bonus.description;
+        bonusEl.style.display = 'block';
+    } else {
+        bonusEl.textContent = '';
+        bonusEl.style.display = 'none';
+    }
+
     // Update status
     const statusEl = document.getElementById('detail-status');
     if (floor.status === 'building') {
@@ -1938,6 +1949,43 @@ function renderPerksTab(container) {
             if (result.success) {
                 haptic('success');
                 showToast(`Traded ${amount} 💎 for ${result.starsGained} ⭐`);
+                updateUI();
+                renderUpgradesTab('perks');
+            } else {
+                haptic('error');
+                showToast(result.error);
+            }
+        });
+    });
+
+    // Offline time bonus section
+    const currentOfflineHours = 3 + (game.offlineTimeBonus || 0);
+    const offlineSection = document.createElement('div');
+    offlineSection.className = 'offline-time-section';
+    offlineSection.style.cssText = 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 12px; border-radius: 8px; margin-bottom: 16px; text-align: center; color: white;';
+    offlineSection.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 8px;">🌙 Offline Earnings Time</div>
+        <div style="font-size: 14px; margin-bottom: 8px;">Currently: <strong>${currentOfflineHours} hours</strong></div>
+        <div style="font-size: 11px; color: #aaa; margin-bottom: 10px;">Earn stars while away! Buy more time with 💎</div>
+        <div style="display: flex; gap: 8px; justify-content: center;">
+            <button class="buy-upgrade-btn buy-offline-btn" data-hours="1" ${game.towerBucks < 25 ? 'disabled' : ''} style="background: #4a00e0; color: white;">
+                +1 hr (25 💎)
+            </button>
+            <button class="buy-upgrade-btn buy-offline-btn" data-hours="3" ${game.towerBucks < 75 ? 'disabled' : ''} style="background: #4a00e0; color: white;">
+                +3 hrs (75 💎)
+            </button>
+        </div>
+    `;
+    container.appendChild(offlineSection);
+
+    // Add offline time purchase listeners
+    offlineSection.querySelectorAll('.buy-offline-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const hours = parseInt(btn.dataset.hours);
+            const result = game.purchaseOfflineTime(hours);
+            if (result.success) {
+                haptic('success');
+                showToast(`Offline time extended to ${result.totalHours} hours!`);
                 updateUI();
                 renderUpgradesTab('perks');
             } else {

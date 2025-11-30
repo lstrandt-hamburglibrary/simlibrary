@@ -14,7 +14,7 @@ class GameState {
 
         // Floors and construction
         this.floors = [];
-        this.maxFloors = 25; // Enough for all floor types plus extras
+        this.maxFloors = Infinity; // Unlimited floors!
         this.nextFloorSlot = 1; // Next available slot to build
 
         // Characters
@@ -458,6 +458,9 @@ class GameState {
             { id: 'generous_tips', name: 'Tip Jar', emoji: '💰', description: '+15% star earnings', cost: 15000, effect: { type: 'earning_bonus', value: 1.15 } }
         ];
         this.unlockedPerks = [];
+
+        // Offline earnings bonus (hours beyond the base 3 hours)
+        this.offlineTimeBonus = 0; // Additional hours purchased with Tower Bucks
 
         // Staff upgrades
         this.staffUpgrades = [
@@ -3578,6 +3581,26 @@ class GameState {
     }
 
     /**
+     * Purchase additional offline earning time with Tower Bucks
+     * Each purchase adds 1 hour to the offline cap (permanently)
+     */
+    purchaseOfflineTime(hours = 1) {
+        const costPerHour = 25; // 25 Tower Bucks per hour
+        const totalCost = hours * costPerHour;
+
+        if (this.towerBucks < totalCost) {
+            return { success: false, error: 'Not enough Tower Bucks' };
+        }
+
+        this.towerBucks -= totalCost;
+        this.offlineTimeBonus = (this.offlineTimeBonus || 0) + hours;
+        this.save();
+
+        const totalHours = 3 + this.offlineTimeBonus;
+        return { success: true, hoursAdded: hours, totalHours };
+    }
+
+    /**
      * Purchase a staff upgrade
      */
     purchaseUpgrade(upgradeId) {
@@ -4183,6 +4206,7 @@ class GameState {
             activeTheme: this.activeTheme,
             unlockedPerks: this.unlockedPerks,
             purchasedUpgrades: this.purchasedUpgrades,
+            offlineTimeBonus: this.offlineTimeBonus,
             totalStarsEarned: this.totalStarsEarned,
             lastCleanedDay: this.lastCleanedDay,
             lastEventHallDay: this.lastEventHallDay,
@@ -4265,6 +4289,7 @@ class GameState {
                 this.activeTheme = data.activeTheme || 'classic';
                 this.unlockedPerks = data.unlockedPerks || [];
                 this.purchasedUpgrades = data.purchasedUpgrades || [];
+                this.offlineTimeBonus = data.offlineTimeBonus || 0;
                 this.totalStarsEarned = data.totalStarsEarned || this.stats.totalStarsEarned || 0;
 
                 // Load cleaning system state
@@ -4351,8 +4376,10 @@ class GameState {
         // Clear any stale readers
         this.readers = [];
 
-        // CAP offline earnings at 3 hours (like Tiny Tower!)
-        const MAX_OFFLINE_TIME = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+        // CAP offline earnings at 3 hours base + any purchased bonus hours
+        const baseOfflineHours = 3;
+        const totalOfflineHours = baseOfflineHours + (this.offlineTimeBonus || 0);
+        const MAX_OFFLINE_TIME = totalOfflineHours * 60 * 60 * 1000;
         const cappedOfflineTime = Math.min(offlineTime, MAX_OFFLINE_TIME);
 
         // Calculate offline earnings (very conservative)
