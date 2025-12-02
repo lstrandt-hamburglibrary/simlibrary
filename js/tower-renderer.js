@@ -354,6 +354,66 @@ class TowerRenderer {
         };
         scienceBgImg.src = 'assets/floor-science.png';
 
+        // Load juvenile series floor background
+        const juvenileBgImg = new Image();
+        juvenileBgImg.onload = () => {
+            this.sprites.floorBackgrounds['juvenile_series'] = juvenileBgImg;
+        };
+        juvenileBgImg.onerror = () => {
+            console.error('Failed to load juvenile series floor background');
+        };
+        juvenileBgImg.src = 'assets/floor-juvenile_series.png';
+
+        // Load maps & travel floor background
+        const mapsTravelBgImg = new Image();
+        mapsTravelBgImg.onload = () => {
+            this.sprites.floorBackgrounds['maps_travel'] = mapsTravelBgImg;
+        };
+        mapsTravelBgImg.onerror = () => {
+            console.error('Failed to load maps & travel floor background');
+        };
+        mapsTravelBgImg.src = 'assets/floor-maps_travel.png';
+
+        // Load teen floor background
+        const teenBgImg = new Image();
+        teenBgImg.onload = () => {
+            this.sprites.floorBackgrounds['teen'] = teenBgImg;
+        };
+        teenBgImg.onerror = () => {
+            console.error('Failed to load teen floor background');
+        };
+        teenBgImg.src = 'assets/floor-teen.png';
+
+        // Load movies floor background
+        const moviesBgImg = new Image();
+        moviesBgImg.onload = () => {
+            this.sprites.floorBackgrounds['movies'] = moviesBgImg;
+        };
+        moviesBgImg.onerror = () => {
+            console.error('Failed to load movies floor background');
+        };
+        moviesBgImg.src = 'assets/floor-movies.png';
+
+        // Load cookbooks floor background
+        const cookbooksBgImg = new Image();
+        cookbooksBgImg.onload = () => {
+            this.sprites.floorBackgrounds['cookbooks'] = cookbooksBgImg;
+        };
+        cookbooksBgImg.onerror = () => {
+            console.error('Failed to load cookbooks floor background');
+        };
+        cookbooksBgImg.src = 'assets/floor-cookbooks.png';
+
+        // Load romance floor background
+        const romanceBgImg = new Image();
+        romanceBgImg.onload = () => {
+            this.sprites.floorBackgrounds['romance'] = romanceBgImg;
+        };
+        romanceBgImg.onerror = () => {
+            console.error('Failed to load romance floor background');
+        };
+        romanceBgImg.src = 'assets/floor-romance.png';
+
         // Load lobby background
         const lobbyBgImg = new Image();
         lobbyBgImg.onload = () => {
