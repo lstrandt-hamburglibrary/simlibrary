@@ -1391,6 +1391,49 @@ class GameState {
     }
 
     /**
+     * Delete a floor from the tower
+     * Returns partial refund of build cost
+     */
+    deleteFloor(floorId) {
+        const floorIndex = this.floors.findIndex(f => f.id === floorId);
+        if (floorIndex === -1) {
+            return { success: false, error: 'Floor not found' };
+        }
+
+        const floor = this.floors[floorIndex];
+
+        // Can't delete lobby (floorNumber 0 is lobby in display terms)
+        // Actually lobby is separate, but let's prevent deleting the last floor
+        if (this.floors.length <= 1) {
+            return { success: false, error: 'Cannot delete last floor' };
+        }
+
+        // Get floor type for refund calculation
+        const floorType = this.floorTypes.find(t => t.id === floor.typeId);
+        const refundAmount = floorType ? Math.floor(floorType.buildCost * 0.5) : 0;
+
+        // Remove any staff assigned to this floor back to available pool
+        if (floor.staff && floor.staff.length > 0) {
+            // Staff are already in the global staff array, just need to unassign
+            floor.staff.forEach(staffId => {
+                const staffMember = this.staff.find(s => s.id === staffId);
+                if (staffMember) {
+                    staffMember.assignedFloor = null;
+                }
+            });
+        }
+
+        // Remove the floor
+        this.floors.splice(floorIndex, 1);
+
+        // Refund partial cost
+        this.stars += refundAmount;
+
+        this.save();
+        return { success: true, refund: refundAmount, floorName: floor.name };
+    }
+
+    /**
      * Rush floor construction with tower bucks
      */
     rushConstruction(floorId) {

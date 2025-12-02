@@ -197,6 +197,28 @@ function setupEventListeners() {
         closeDetailModal();
     });
 
+    // Delete floor button
+    document.getElementById('delete-floor-btn').addEventListener('click', () => {
+        if (!currentFloorId) return;
+
+        const floor = game.getFloor(currentFloorId);
+        if (!floor) return;
+
+        const floorType = game.floorTypes.find(t => t.id === floor.typeId);
+        const refundAmount = floorType ? Math.floor(floorType.buildCost * 0.5) : 0;
+
+        if (confirm(`Are you sure you want to delete "${floor.name}"?\n\nYou will receive ${refundAmount} ⭐ as a refund (50% of build cost).`)) {
+            haptic('heavy');
+            const result = game.deleteFloor(currentFloorId);
+            if (result.success) {
+                closeDetailModal();
+                showToast(`Deleted ${result.floorName}! Refunded ${result.refund} ⭐`);
+            } else {
+                showToast(result.error || 'Could not delete floor');
+            }
+        }
+    });
+
     // Close detail modal when clicking outside
     document.getElementById('detail-modal').addEventListener('click', (e) => {
         if (e.target.id === 'detail-modal') {
