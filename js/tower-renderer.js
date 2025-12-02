@@ -414,6 +414,16 @@ class TowerRenderer {
         };
         romanceBgImg.src = 'assets/floor-romance.png';
 
+        // Load true crime floor background
+        const trueCrimeBgImg = new Image();
+        trueCrimeBgImg.onload = () => {
+            this.sprites.floorBackgrounds['true_crime'] = trueCrimeBgImg;
+        };
+        trueCrimeBgImg.onerror = () => {
+            console.error('Failed to load true crime floor background');
+        };
+        trueCrimeBgImg.src = 'assets/floor-true_crime.png';
+
         // Load lobby background
         const lobbyBgImg = new Image();
         lobbyBgImg.onload = () => {
