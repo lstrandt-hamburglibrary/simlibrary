@@ -474,6 +474,16 @@ class TowerRenderer {
         };
         graphicNovelsBgImg.src = 'assets/floor-graphic_novels.png';
 
+        // Load biography floor background
+        const biographyBgImg = new Image();
+        biographyBgImg.onload = () => {
+            this.sprites.floorBackgrounds['biography'] = biographyBgImg;
+        };
+        biographyBgImg.onerror = () => {
+            console.error('Failed to load biography floor background');
+        };
+        biographyBgImg.src = 'assets/floor-biography.png';
+
         // Load lobby background
         const lobbyBgImg = new Image();
         lobbyBgImg.onload = () => {
