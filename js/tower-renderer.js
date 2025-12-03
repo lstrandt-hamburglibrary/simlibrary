@@ -454,6 +454,16 @@ class TowerRenderer {
         };
         fictionBgImg.src = 'assets/floor-fiction.png';
 
+        // Load mystery floor background
+        const mysteryBgImg = new Image();
+        mysteryBgImg.onload = () => {
+            this.sprites.floorBackgrounds['mystery'] = mysteryBgImg;
+        };
+        mysteryBgImg.onerror = () => {
+            console.error('Failed to load mystery floor background');
+        };
+        mysteryBgImg.src = 'assets/floor-mystery.png';
+
         // Load lobby background
         const lobbyBgImg = new Image();
         lobbyBgImg.onload = () => {
