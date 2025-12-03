@@ -265,8 +265,8 @@ class TowerRenderer {
         };
         bookshelfImg.src = 'assets/bookshelf-main.png';
 
-        // Load book sprites (6 variations)
-        const bookSprites = ['book-1.png', 'book-2.png', 'book-3.png', 'book-4.png', 'book-5.png', 'book-6.png'];
+        // Load book sprites (12 variations)
+        const bookSprites = ['book-1.png', 'book-2.png', 'book-3.png', 'book-4.png', 'book-5.png', 'book-6.png', 'book-7.png', 'book-8.png', 'book-9.png', 'book-10.png', 'book-11.png', 'book-12.png'];
         let loadedBooks = 0;
 
         bookSprites.forEach((filename, index) => {
