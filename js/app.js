@@ -970,7 +970,8 @@ function openFloorDetail(floorId) {
         'graphic_novels': 'floor-graphic_novels.png',
         'biography': 'floor-biography.png',
         'bathroom': 'floor-bathroom.png',
-        'lobby': 'floor-lobby.png'
+        'lobby': 'floor-lobby.png',
+        'sports': 'floor-sports.png'
     };
     const bgFilename = floorBgMap[floor.typeId];
     if (bgFilename) {
