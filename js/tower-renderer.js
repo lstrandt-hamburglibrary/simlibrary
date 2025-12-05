@@ -294,15 +294,19 @@ class TowerRenderer {
         };
         floorBgImg.src = 'assets/floor-boardbooks.png';
 
-        // Load bathroom floor background
-        const bathroomBgImg = new Image();
-        bathroomBgImg.onload = () => {
-            this.sprites.floorBackgrounds['bathroom'] = bathroomBgImg;
-        };
-        bathroomBgImg.onerror = () => {
-            console.error('Failed to load bathroom floor background');
-        };
-        bathroomBgImg.src = 'assets/floor-restroom.png';
+        // Load bathroom floor backgrounds (3 variants)
+        this.sprites.bathroomVariants = [];
+        for (let i = 1; i <= 3; i++) {
+            const bathroomBgImg = new Image();
+            const index = i - 1;
+            bathroomBgImg.onload = () => {
+                this.sprites.bathroomVariants[index] = bathroomBgImg;
+            };
+            bathroomBgImg.onerror = () => {
+                console.error(`Failed to load bathroom floor background ${i}`);
+            };
+            bathroomBgImg.src = `assets/floor-bathroom-${i}.png`;
+        }
 
         // Load picture books floor background
         const pictureBooksBgImg = new Image();
@@ -3017,7 +3021,14 @@ class TowerRenderer {
         const centerX = x + this.floorWidth / 2;
 
         // Draw custom floor background sprite if available
-        const floorBg = this.sprites.floorBackgrounds[floorType.id];
+        let floorBg = this.sprites.floorBackgrounds[floorType.id];
+
+        // For bathroom, pick a random variant based on floor ID
+        if (floorType.id === 'bathroom' && this.sprites.bathroomVariants && this.sprites.bathroomVariants.length > 0) {
+            const variantIndex = floor.id % this.sprites.bathroomVariants.length;
+            floorBg = this.sprites.bathroomVariants[variantIndex];
+        }
+
         if (floorBg && floorBg.complete) {
             this.ctx.drawImage(floorBg, x, y, this.floorWidth, this.floorHeight);
         }
