@@ -847,9 +847,9 @@ class TowerRenderer {
         // Draw custom floor background sprite if available for this floor type
         let floorBg = this.sprites.floorBackgrounds[floor.typeId];
 
-        // For bathroom, pick a random variant based on floor ID
+        // For bathroom, pick a variant based on floor number
         if (floor.typeId === 'bathroom' && this.sprites.bathroomVariants && this.sprites.bathroomVariants.length > 0) {
-            const variantIndex = floor.id % this.sprites.bathroomVariants.length;
+            const variantIndex = floor.floorNumber % this.sprites.bathroomVariants.length;
             floorBg = this.sprites.bathroomVariants[variantIndex];
         }
 
@@ -3030,9 +3030,9 @@ class TowerRenderer {
         // Draw custom floor background sprite if available
         let floorBg = this.sprites.floorBackgrounds[floorType.id];
 
-        // For bathroom, pick a random variant based on floor ID
+        // For bathroom, pick a variant based on floor number
         if (floorType.id === 'bathroom' && this.sprites.bathroomVariants && this.sprites.bathroomVariants.length > 0) {
-            const variantIndex = floor.id % this.sprites.bathroomVariants.length;
+            const variantIndex = floor.floorNumber % this.sprites.bathroomVariants.length;
             floorBg = this.sprites.bathroomVariants[variantIndex];
         }
 
