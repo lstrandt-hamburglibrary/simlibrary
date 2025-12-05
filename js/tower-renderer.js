@@ -346,7 +346,17 @@ class TowerRenderer {
         technologyBgImg.onerror = () => {
             console.error('Failed to load technology floor background');
         };
-        technologyBgImg.src = 'assets/floor-computer-lab.png';
+        technologyBgImg.src = 'assets/floor-technology.png';
+
+        // Load sports floor background
+        const sportsBgImg = new Image();
+        sportsBgImg.onload = () => {
+            this.sprites.floorBackgrounds['sports'] = sportsBgImg;
+        };
+        sportsBgImg.onerror = () => {
+            console.error('Failed to load sports floor background');
+        };
+        sportsBgImg.src = 'assets/floor-sports.png';
 
         // Load science floor background
         const scienceBgImg = new Image();
