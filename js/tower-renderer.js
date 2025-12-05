@@ -3021,21 +3021,7 @@ class TowerRenderer {
         // Draw themed elements based on room type
         switch(floorType.id) {
             case 'study_room':
-                // Draw desks with lamps
-                for (let i = 0; i < 3; i++) {
-                    const deskX = x + 80 + i * 150;
-                    const deskY = y + 50;
-
-                    // Desk
-                    this.ctx.fillStyle = '#8D6E63';
-                    this.ctx.fillRect(deskX, deskY, 80, 40);
-
-                    // Lamp
-                    this.ctx.fillStyle = '#FFD54F';
-                    this.ctx.beginPath();
-                    this.ctx.arc(deskX + 40, deskY + 10, 8, 0, Math.PI * 2);
-                    this.ctx.fill();
-                }
+                // Background image only - no additional drawing needed
                 break;
 
             case 'maker_space':
