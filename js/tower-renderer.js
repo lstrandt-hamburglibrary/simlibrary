@@ -508,6 +508,16 @@ class TowerRenderer {
         };
         bakeryBgImg.src = 'assets/floor-bakery.png';
 
+        // Load hot drinks cafe floor background
+        const hotDrinksCafeBgImg = new Image();
+        hotDrinksCafeBgImg.onload = () => {
+            this.sprites.floorBackgrounds['hot_drinks_cafe'] = hotDrinksCafeBgImg;
+        };
+        hotDrinksCafeBgImg.onerror = () => {
+            console.error('Failed to load hot drinks cafe floor background');
+        };
+        hotDrinksCafeBgImg.src = 'assets/floor-hot_drinks_cafe.png';
+
         // Load science floor background
         const scienceBgImg = new Image();
         scienceBgImg.onload = () => {
