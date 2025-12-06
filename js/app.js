@@ -10,6 +10,110 @@ let towerRenderer = null;
 let confirmCallback = null;
 
 /**
+ * Sound Effects Manager using Web Audio API
+ */
+const SoundManager = {
+    audioContext: null,
+    enabled: true,
+    volume: 0.3,
+
+    init() {
+        this.enabled = localStorage.getItem('soundEnabled') !== 'false';
+        // AudioContext is created on first user interaction
+    },
+
+    ensureContext() {
+        if (!this.audioContext) {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+    },
+
+    toggle() {
+        this.enabled = !this.enabled;
+        localStorage.setItem('soundEnabled', this.enabled);
+        return this.enabled;
+    },
+
+    playTone(frequency, duration, type = 'sine', volumeMult = 1) {
+        if (!this.enabled) return;
+        this.ensureContext();
+
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        oscillator.frequency.value = frequency;
+        oscillator.type = type;
+        gainNode.gain.setValueAtTime(this.volume * volumeMult, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + duration);
+    },
+
+    // Coin/star collection sound - cheerful ding
+    coin() {
+        this.playTone(880, 0.1, 'sine', 0.5);
+        setTimeout(() => this.playTone(1100, 0.15, 'sine', 0.4), 50);
+    },
+
+    // Button click sound
+    click() {
+        this.playTone(600, 0.05, 'square', 0.2);
+    },
+
+    // Success sound (achievement, mission complete)
+    success() {
+        this.playTone(523, 0.1, 'sine', 0.4);
+        setTimeout(() => this.playTone(659, 0.1, 'sine', 0.4), 100);
+        setTimeout(() => this.playTone(784, 0.2, 'sine', 0.4), 200);
+    },
+
+    // Error/denied sound
+    error() {
+        this.playTone(200, 0.15, 'sawtooth', 0.3);
+        setTimeout(() => this.playTone(150, 0.2, 'sawtooth', 0.3), 100);
+    },
+
+    // Restock start sound
+    restock() {
+        this.playTone(400, 0.08, 'triangle', 0.3);
+        setTimeout(() => this.playTone(500, 0.08, 'triangle', 0.3), 60);
+    },
+
+    // Build complete sound
+    build() {
+        this.playTone(440, 0.1, 'sine', 0.3);
+        setTimeout(() => this.playTone(554, 0.1, 'sine', 0.3), 80);
+        setTimeout(() => this.playTone(659, 0.15, 'sine', 0.3), 160);
+    },
+
+    // Visitor arrival (subtle)
+    visitor() {
+        this.playTone(700, 0.05, 'sine', 0.15);
+    },
+
+    // Level up fanfare
+    levelUp() {
+        const notes = [523, 659, 784, 1047];
+        notes.forEach((freq, i) => {
+            setTimeout(() => this.playTone(freq, 0.15, 'sine', 0.4), i * 100);
+        });
+    },
+
+    // Cash register / purchase sound
+    purchase() {
+        this.playTone(800, 0.05, 'square', 0.2);
+        setTimeout(() => this.playTone(1000, 0.1, 'square', 0.2), 50);
+    }
+};
+
+/**
  * Show confirmation modal
  */
 function showConfirm(title, message) {
@@ -38,6 +142,9 @@ function closeConfirmModal(result) {
  */
 function init() {
     game = new GameState();
+
+    // Initialize sound system
+    SoundManager.init();
 
     // Expose functions for tower renderer to call BEFORE creating renderer
     window.openFloorDetail = openFloorDetail;
@@ -129,6 +236,7 @@ function init() {
 
         // Check for new achievements
         if (game._newAchievements && game._newAchievements.length > 0) {
+            SoundManager.success();
             game._newAchievements.forEach(achievement => {
                 const bucksText = achievement.rewardBucks > 0 ? ` + ${achievement.rewardBucks} 💎` : '';
                 alert(`🏆 Achievement Unlocked!\n${achievement.name}\n${achievement.description}\n\nReward: ${achievement.reward} ⭐${bucksText}`);
@@ -320,6 +428,18 @@ function setupEventListeners() {
     document.getElementById('upgrades-modal').addEventListener('click', (e) => {
         if (e.target.id === 'upgrades-modal') {
             closeUpgradesModal();
+        }
+    });
+
+    // Sound toggle button
+    const soundBtn = document.getElementById('toggle-sound-btn');
+    // Update initial state
+    soundBtn.textContent = SoundManager.enabled ? '🔊' : '🔇';
+    soundBtn.addEventListener('click', () => {
+        const enabled = SoundManager.toggle();
+        soundBtn.textContent = enabled ? '🔊' : '🔇';
+        if (enabled) {
+            SoundManager.click(); // Play a click sound to confirm sound is on
         }
     });
 
@@ -1326,11 +1446,13 @@ async function handleHireStaff(floorId, staffIndex) {
     const result = game.hireStaff(floorId, hasCustomStaff ? staffIndex : undefined);
     if (result.success) {
         haptic('heavy');
+        SoundManager.purchase();
         renderStaffSlots(floor);
         renderBookCategories(floor);
         updateGlobalStats();
     } else {
         haptic('error');
+        SoundManager.error();
         alert(result.error || 'Cannot hire staff');
     }
 }
@@ -1436,11 +1558,13 @@ function handleRestock(floorId, categoryIndex) {
     const result = game.restockBooks(floorId, categoryIndex);
     if (result.success) {
         haptic('medium');
+        SoundManager.restock();
         const floor = game.getFloor(floorId);
         renderBookCategories(floor);
         updateGlobalStats();
     } else {
         haptic('error');
+        SoundManager.error();
         alert(result.error || 'Cannot restock');
     }
 }
@@ -1452,11 +1576,13 @@ function handleRushRestock(floorId, categoryIndex) {
     const success = game.rushRestocking(floorId, categoryIndex);
     if (success) {
         haptic('medium');
+        SoundManager.coin();
         const floor = game.getFloor(floorId);
         renderBookCategories(floor);
         updateGlobalStats();
     } else {
         haptic('error');
+        SoundManager.error();
         alert('Not enough Tower Bucks!');
     }
 }
@@ -1589,11 +1715,13 @@ async function handleBuildFloor(floorTypeId) {
     const result = game.buildFloor(floorTypeId);
     if (result.success) {
         haptic('heavy');
+        SoundManager.purchase();
         closeBuildModal();
         renderTowerScreen();
         updateGlobalStats();
     } else {
         haptic('error');
+        SoundManager.error();
         alert(result.error || 'Cannot build floor');
     }
 }
