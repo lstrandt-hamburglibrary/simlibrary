@@ -613,24 +613,62 @@ class GameState {
 
         // Achievements system
         this.achievements = [
+            // Floors Built
             { id: 'first_floor', name: 'Getting Started', description: 'Build your first floor', requirement: 1, stat: 'totalFloorsBuilt', reward: 50, rewardBucks: 0, unlocked: false },
             { id: 'tower_rising', name: 'Tower Rising', description: 'Build 5 floors', requirement: 5, stat: 'totalFloorsBuilt', reward: 100, rewardBucks: 1, unlocked: false },
             { id: 'tower_tycoon', name: 'Tower Tycoon', description: 'Build 10 floors', requirement: 10, stat: 'totalFloorsBuilt', reward: 250, rewardBucks: 2, unlocked: false },
+            { id: 'sky_high', name: 'Sky High', description: 'Build 20 floors', requirement: 20, stat: 'totalFloorsBuilt', reward: 500, rewardBucks: 3, unlocked: false },
+            { id: 'cloud_piercer', name: 'Cloud Piercer', description: 'Build 35 floors', requirement: 35, stat: 'totalFloorsBuilt', reward: 1000, rewardBucks: 5, unlocked: false },
+            { id: 'space_elevator', name: 'Space Elevator', description: 'Build 50 floors', requirement: 50, stat: 'totalFloorsBuilt', reward: 2000, rewardBucks: 10, unlocked: false },
 
+            // Readers Served
             { id: 'bookworm', name: 'Bookworm', description: 'Serve 100 readers', requirement: 100, stat: 'totalReadersServed', reward: 100, rewardBucks: 1, unlocked: false },
             { id: 'library_legend', name: 'Library Legend', description: 'Serve 500 readers', requirement: 500, stat: 'totalReadersServed', reward: 300, rewardBucks: 2, unlocked: false },
+            { id: 'crowd_pleaser', name: 'Crowd Pleaser', description: 'Serve 1,000 readers', requirement: 1000, stat: 'totalReadersServed', reward: 500, rewardBucks: 3, unlocked: false },
+            { id: 'community_hub', name: 'Community Hub', description: 'Serve 2,500 readers', requirement: 2500, stat: 'totalReadersServed', reward: 1000, rewardBucks: 5, unlocked: false },
+            { id: 'literary_landmark', name: 'Literary Landmark', description: 'Serve 5,000 readers', requirement: 5000, stat: 'totalReadersServed', reward: 2000, rewardBucks: 10, unlocked: false },
 
+            // VIPs Served
             { id: 'vip_treatment', name: 'VIP Treatment', description: 'Serve 10 VIP readers', requirement: 10, stat: 'totalVIPsServed', reward: 150, rewardBucks: 1, unlocked: false },
             { id: 'celebrity_status', name: 'Celebrity Status', description: 'Serve 50 VIP readers', requirement: 50, stat: 'totalVIPsServed', reward: 400, rewardBucks: 3, unlocked: false },
+            { id: 'red_carpet', name: 'Red Carpet', description: 'Serve 100 VIP readers', requirement: 100, stat: 'totalVIPsServed', reward: 800, rewardBucks: 5, unlocked: false },
+            { id: 'a_list_venue', name: 'A-List Venue', description: 'Serve 250 VIP readers', requirement: 250, stat: 'totalVIPsServed', reward: 1500, rewardBucks: 8, unlocked: false },
 
+            // Missions Completed
             { id: 'mission_starter', name: 'Mission Starter', description: 'Complete 5 missions', requirement: 5, stat: 'totalMissionsCompleted', reward: 75, rewardBucks: 1, unlocked: false },
             { id: 'mission_master', name: 'Mission Master', description: 'Complete 25 missions', requirement: 25, stat: 'totalMissionsCompleted', reward: 200, rewardBucks: 2, unlocked: false },
+            { id: 'quest_champion', name: 'Quest Champion', description: 'Complete 50 missions', requirement: 50, stat: 'totalMissionsCompleted', reward: 500, rewardBucks: 4, unlocked: false },
+            { id: 'legendary_librarian', name: 'Legendary Librarian', description: 'Complete 100 missions', requirement: 100, stat: 'totalMissionsCompleted', reward: 1000, rewardBucks: 8, unlocked: false },
 
+            // Staff Hired
             { id: 'hiring_spree', name: 'Hiring Spree', description: 'Hire 10 staff members', requirement: 10, stat: 'totalStaffHired', reward: 100, rewardBucks: 1, unlocked: false },
             { id: 'well_staffed', name: 'Well Staffed', description: 'Hire 25 staff members', requirement: 25, stat: 'totalStaffHired', reward: 250, rewardBucks: 2, unlocked: false },
+            { id: 'hr_department', name: 'HR Department', description: 'Hire 50 staff members', requirement: 50, stat: 'totalStaffHired', reward: 500, rewardBucks: 4, unlocked: false },
+            { id: 'job_creator', name: 'Job Creator', description: 'Hire 100 staff members', requirement: 100, stat: 'totalStaffHired', reward: 1000, rewardBucks: 8, unlocked: false },
 
+            // Books Checked Out
             { id: 'page_turner', name: 'Page Turner', description: 'Check out 500 books', requirement: 500, stat: 'totalBooksCheckedOut', reward: 150, rewardBucks: 1, unlocked: false },
-            { id: 'library_hero', name: 'Library Hero', description: 'Check out 2000 books', requirement: 2000, stat: 'totalBooksCheckedOut', reward: 500, rewardBucks: 3, unlocked: false }
+            { id: 'library_hero', name: 'Library Hero', description: 'Check out 2,000 books', requirement: 2000, stat: 'totalBooksCheckedOut', reward: 500, rewardBucks: 3, unlocked: false },
+            { id: 'book_distributor', name: 'Book Distributor', description: 'Check out 5,000 books', requirement: 5000, stat: 'totalBooksCheckedOut', reward: 1000, rewardBucks: 5, unlocked: false },
+            { id: 'knowledge_spreader', name: 'Knowledge Spreader', description: 'Check out 10,000 books', requirement: 10000, stat: 'totalBooksCheckedOut', reward: 2000, rewardBucks: 8, unlocked: false },
+            { id: 'literacy_champion', name: 'Literacy Champion', description: 'Check out 25,000 books', requirement: 25000, stat: 'totalBooksCheckedOut', reward: 5000, rewardBucks: 15, unlocked: false },
+
+            // Stars Earned
+            { id: 'star_collector', name: 'Star Collector', description: 'Earn 1,000 total stars', requirement: 1000, stat: 'totalStarsEarned', reward: 100, rewardBucks: 1, unlocked: false },
+            { id: 'star_hoarder', name: 'Star Hoarder', description: 'Earn 10,000 total stars', requirement: 10000, stat: 'totalStarsEarned', reward: 500, rewardBucks: 3, unlocked: false },
+            { id: 'star_millionaire', name: 'Star Millionaire', description: 'Earn 50,000 total stars', requirement: 50000, stat: 'totalStarsEarned', reward: 1500, rewardBucks: 8, unlocked: false },
+            { id: 'star_billionaire', name: 'Star Billionaire', description: 'Earn 100,000 total stars', requirement: 100000, stat: 'totalStarsEarned', reward: 3000, rewardBucks: 15, unlocked: false },
+
+            // Tower Bucks Earned
+            { id: 'gem_finder', name: 'Gem Finder', description: 'Earn 10 Tower Bucks', requirement: 10, stat: 'totalTowerBucksEarned', reward: 200, rewardBucks: 2, unlocked: false },
+            { id: 'gem_collector', name: 'Gem Collector', description: 'Earn 50 Tower Bucks', requirement: 50, stat: 'totalTowerBucksEarned', reward: 500, rewardBucks: 5, unlocked: false },
+            { id: 'gem_tycoon', name: 'Gem Tycoon', description: 'Earn 100 Tower Bucks', requirement: 100, stat: 'totalTowerBucksEarned', reward: 1000, rewardBucks: 10, unlocked: false },
+
+            // Time Played (in seconds)
+            { id: 'getting_hooked', name: 'Getting Hooked', description: 'Play for 1 hour', requirement: 3600, stat: 'timePlayed', reward: 100, rewardBucks: 1, unlocked: false },
+            { id: 'dedicated_reader', name: 'Dedicated Reader', description: 'Play for 5 hours', requirement: 18000, stat: 'timePlayed', reward: 300, rewardBucks: 3, unlocked: false },
+            { id: 'library_addict', name: 'Library Addict', description: 'Play for 10 hours', requirement: 36000, stat: 'timePlayed', reward: 600, rewardBucks: 5, unlocked: false },
+            { id: 'true_librarian', name: 'True Librarian', description: 'Play for 24 hours', requirement: 86400, stat: 'timePlayed', reward: 1500, rewardBucks: 10, unlocked: false }
         ];
 
         // Daily login tracking

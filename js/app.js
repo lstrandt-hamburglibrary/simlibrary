@@ -434,10 +434,10 @@ function setupEventListeners() {
     // Sound toggle button
     const soundBtn = document.getElementById('toggle-sound-btn');
     // Update initial state
-    soundBtn.textContent = SoundManager.enabled ? '🔊' : '🔇';
+    soundBtn.textContent = SoundManager.enabled ? '🔔' : '🔕';
     soundBtn.addEventListener('click', () => {
         const enabled = SoundManager.toggle();
-        soundBtn.textContent = enabled ? '🔊' : '🔇';
+        soundBtn.textContent = enabled ? '🔔' : '🔕';
         if (enabled) {
             SoundManager.click(); // Play a click sound to confirm sound is on
         }
