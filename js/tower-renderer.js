@@ -1139,25 +1139,49 @@ class TowerRenderer {
      * Draw a ready floor with book shelves and readers
      */
     drawReadyFloor(floor, x, y, colors, floorIndex) {
-        // Floor name - centered, library-themed banner style
+        // Floor name - left-aligned with gold banner background
         this.ctx.save();
 
-        const centerX = x + this.floorWidth / 2;
-        const titleY = y + 18;
         const titleText = floor.name;
 
         // Elegant serif-style font
         this.ctx.font = 'bold 13px Georgia, serif';
-        this.ctx.textAlign = 'center';
+        const textMetrics = this.ctx.measureText(titleText);
+        const textWidth = textMetrics.width;
+        const padding = 8;
+        const bannerHeight = 20;
+        const bannerX = x + 6;
+        const bannerY = y + 8;
+
+        // Gold gradient background
+        const gradient = this.ctx.createLinearGradient(bannerX, bannerY, bannerX, bannerY + bannerHeight);
+        gradient.addColorStop(0, '#F4D03F');
+        gradient.addColorStop(0.5, '#D4AC0D');
+        gradient.addColorStop(1, '#B7950B');
+        this.ctx.fillStyle = gradient;
+
+        // Rounded rectangle banner
+        const radius = 4;
+        this.ctx.beginPath();
+        this.ctx.roundRect(bannerX, bannerY, textWidth + padding * 2, bannerHeight, radius);
+        this.ctx.fill();
+
+        // Subtle border
+        this.ctx.strokeStyle = '#8B7355';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+
+        // Text
+        this.ctx.textAlign = 'left';
         this.ctx.textBaseline = 'middle';
 
-        // Text shadow for depth
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        this.ctx.fillText(titleText, centerX + 1, titleY + 1);
+        // Text shadow
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        this.ctx.fillText(titleText, bannerX + padding + 1, bannerY + bannerHeight / 2 + 1);
 
-        // Main text in warm library brown
-        this.ctx.fillStyle = '#4A3728';
-        this.ctx.fillText(titleText, centerX, titleY);
+        // Main text in dark brown
+        this.ctx.fillStyle = '#3D2817';
+        this.ctx.fillText(titleText, bannerX + padding, bannerY + bannerHeight / 2);
 
         this.ctx.restore();
 
