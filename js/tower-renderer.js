@@ -1632,11 +1632,10 @@ class TowerRenderer {
                 const rowSpacing = 26 * scale;
                 const rowWidth = width - 10 * scale;
 
-                // Draw 2 rows of books, with stock percentage determining how much to show
+                // Draw 2 rows of books - bottom row (row 1) fills first, then top row (row 0)
                 for (let row = 0; row < 2; row++) {
-                    // Calculate what portion of stock this row represents
-                    const rowStockStart = row * 0.5; // Row 0: 0-50%, Row 1: 50-100%
-                    const rowStockEnd = (row + 1) * 0.5;
+                    // Bottom row (row 1) fills from 0-50%, top row (row 0) fills from 50-100%
+                    const rowStockStart = (1 - row) * 0.5; // Row 0: 50-100%, Row 1: 0-50%
 
                     // How much of this row should be filled
                     let rowFillPercent = 0;
@@ -1649,8 +1648,10 @@ class TowerRenderer {
                         const sourceWidth = spineImg.width * rowFillPercent;
 
                         // Use different starting offsets for each row and shelf for variety
+                        // Make sure we don't divide by zero when sourceWidth equals full width
+                        const maxOffset = Math.max(1, spineImg.width - sourceWidth);
                         const offsetSeed = (shelfIndex * 137 + row * 73) % spineImg.width;
-                        const sourceX = offsetSeed % (spineImg.width - sourceWidth);
+                        const sourceX = offsetSeed % maxOffset;
 
                         this.ctx.drawImage(
                             spineImg,
