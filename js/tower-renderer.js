@@ -3050,6 +3050,8 @@ class TowerRenderer {
                     this._reorderCurrentY = clickY;
                     // Initialize target to current position
                     this.reorderTargetIndex = this.game.floors.findIndex(f => f.id === this.reorderFloor.id);
+                    // Flag that we just activated - first mouse up should not exit
+                    this._reorderJustActivated = true;
                     this.canvas.style.cursor = 'move';
                     console.log('Reorder mode activated for:', this.reorderFloor.name);
                 }
@@ -3102,19 +3104,18 @@ class TowerRenderer {
         }
         this._potentialReorderFloor = null;
 
-        // Handle reorder mode drop
+        // Handle reorder mode
         if (this.isReorderMode && this.reorderFloor) {
-            const currentIndex = this.game.floors.findIndex(f => f.id === this.reorderFloor.id);
-            const targetIndex = this.reorderTargetIndex;
-
-            if (targetIndex !== -1 && targetIndex !== currentIndex) {
-                this.game.reorderFloor(this.reorderFloor.id, targetIndex);
-                console.log(`Moved ${this.reorderFloor.name} from index ${currentIndex} to ${targetIndex}`);
+            // If reorder mode was just activated by long press, don't exit on this mouse up
+            if (this._reorderJustActivated) {
+                this._reorderJustActivated = false;
+                this.isDragging = false;
+                this.canvas.style.cursor = 'pointer';
+                return;
             }
 
-            this.isReorderMode = false;
-            this.reorderFloor = null;
-            this.reorderTargetIndex = -1;
+            // Otherwise confirm the reorder
+            this.confirmReorder();
         }
 
         this.isDragging = false;
@@ -3172,6 +3173,8 @@ class TowerRenderer {
                         this._reorderCurrentY = touchY;
                         // Initialize target to current position
                         this.reorderTargetIndex = this.game.floors.findIndex(f => f.id === this.reorderFloor.id);
+                        // Flag that we just activated - first touch end should not exit
+                        this._reorderJustActivated = true;
                         // Haptic feedback if available
                         if (navigator.vibrate) {
                             navigator.vibrate(50);
@@ -3292,6 +3295,13 @@ class TowerRenderer {
 
         // Handle reorder mode
         if (this.isReorderMode && this.reorderFloor) {
+            // If reorder mode was just activated by long press, don't exit on this touch end
+            if (this._reorderJustActivated) {
+                this._reorderJustActivated = false;
+                this.isDragging = false;
+                return;
+            }
+
             // If didn't move much, check if arrow buttons were tapped
             if (!this._touchMoved) {
                 const rect = this._touchStartRect || this.canvas.getBoundingClientRect();
