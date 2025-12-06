@@ -1337,18 +1337,23 @@ class TowerRenderer {
             // Draw utility room content
             this.drawUtilityRoom(floor, x, y, colors, floorType);
         } else {
-            // Draw book shelves (3 categories) - scale with floor size
-            const scale = this.getScale();
-            const shelfY = y + this.floorHeight - 65; // Position from bottom to stay consistent regardless of floor height
-            const shelfWidth = 120 * scale;
-            const shelfHeight = 60 * scale;
-            const shelfSpacing = (this.floorWidth - 60 * scale - shelfWidth * 3) / 2;
+            // Floors with custom backgrounds that shouldn't have shelves drawn over them
+            const floorsWithoutShelves = ['podcast_studio'];
 
-            floor.bookStock.forEach((category, index) => {
-                let shelfX = x + 40 * scale + index * (shelfWidth + shelfSpacing); // Moved right from 30 to 40
+            if (!floorsWithoutShelves.includes(floor.typeId)) {
+                // Draw book shelves (3 categories) - scale with floor size
+                const scale = this.getScale();
+                const shelfY = y + this.floorHeight - 65; // Position from bottom to stay consistent regardless of floor height
+                const shelfWidth = 120 * scale;
+                const shelfHeight = 60 * scale;
+                const shelfSpacing = (this.floorWidth - 60 * scale - shelfWidth * 3) / 2;
 
-                this.drawBookshelf(category, shelfX, shelfY, shelfWidth, shelfHeight, colors, floor.typeId, scale, index);
-            });
+                floor.bookStock.forEach((category, index) => {
+                    let shelfX = x + 40 * scale + index * (shelfWidth + shelfSpacing); // Moved right from 30 to 40
+
+                    this.drawBookshelf(category, shelfX, shelfY, shelfWidth, shelfHeight, colors, floor.typeId, scale, index);
+                });
+            }
         }
 
         // Store floor bounds for click detection
