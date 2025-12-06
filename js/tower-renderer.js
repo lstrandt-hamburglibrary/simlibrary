@@ -1144,7 +1144,7 @@ class TowerRenderer {
 
         const centerX = x + this.floorWidth / 2;
         const titleY = y + 18;
-        const titleText = `${floor.emoji} ${floor.name}`;
+        const titleText = floor.name;
 
         // Elegant serif-style font
         this.ctx.font = 'bold 13px Georgia, serif';
