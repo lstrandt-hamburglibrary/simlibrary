@@ -1689,14 +1689,14 @@ class GameState {
         );
         if (readyFloors.length === 0) return null;
 
-        // Check bathroom requirement: need 1 bathroom per 5 regular floors
+        // Check bathroom requirement: need 1 bathroom per 10 regular floors
         const regularFloors = this.floors.filter(f =>
             f.status === 'ready' && !f.typeId?.includes('bathroom') && !f.typeId?.includes('basement')
         ).length;
         const bathroomCount = this.floors.filter(f =>
             f.typeId === 'bathroom' && f.status === 'ready'
         ).length;
-        const neededBathrooms = Math.floor(regularFloors / 5);
+        const neededBathrooms = Math.floor(regularFloors / 10);
 
         // If missing bathrooms, 30% chance readers refuse to come
         if (bathroomCount < neededBathrooms && Math.random() < 0.3) {
@@ -2547,14 +2547,14 @@ class GameState {
             }
         });
 
-        // Check bathroom requirement
+        // Check bathroom requirement (1 per 10 floors)
         const regularFloors = this.floors.filter(f =>
             f.status === 'ready' && !f.typeId?.includes('bathroom') && !f.typeId?.includes('basement')
         ).length;
         const bathroomCount = this.floors.filter(f =>
             f.typeId === 'bathroom' && f.status === 'ready'
         ).length;
-        const neededBathrooms = Math.floor(regularFloors / 5);
+        const neededBathrooms = Math.floor(regularFloors / 10);
         if (bathroomCount < neededBathrooms) {
             problems.push({
                 emoji: '🚻',
