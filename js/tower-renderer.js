@@ -2335,8 +2335,8 @@ class TowerRenderer {
      * Draw arrow buttons for reordering floors
      */
     drawReorderArrowButtons(gapY, targetIndex, totalFloors) {
-        const buttonSize = 60;
-        const buttonPadding = 15;
+        const buttonSize = 36;
+        const buttonPadding = 8;
         const centerY = gapY + this.floorHeight / 2;
 
         // Clear button bounds
@@ -2344,23 +2344,23 @@ class TowerRenderer {
         this._reorderDownBounds = null;
         this._reorderDoneBounds = null;
 
-        // Up arrow (left side) - only if not at top
-        if (targetIndex < totalFloors - 1) {
+        // Up arrow (left side) - show if can move up (to lower index)
+        if (targetIndex > 0) {
             const upX = this.floorX - buttonSize - buttonPadding;
-            const upY = centerY - buttonSize / 2;
+            const upY = centerY - buttonSize - 4;
 
             this.ctx.save();
             this.ctx.fillStyle = 'rgba(76, 175, 80, 0.9)';
             this.ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-            this.ctx.shadowBlur = 8;
-            this.ctx.shadowOffsetY = 3;
+            this.ctx.shadowBlur = 6;
+            this.ctx.shadowOffsetY = 2;
             this.ctx.beginPath();
             this.ctx.arc(upX + buttonSize / 2, upY + buttonSize / 2, buttonSize / 2, 0, Math.PI * 2);
             this.ctx.fill();
 
             // Arrow icon
             this.ctx.fillStyle = 'white';
-            this.ctx.font = 'bold 32px Arial';
+            this.ctx.font = 'bold 20px Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('▲', upX + buttonSize / 2, upY + buttonSize / 2);
@@ -2369,23 +2369,23 @@ class TowerRenderer {
             this._reorderUpBounds = { x: upX, y: upY, width: buttonSize, height: buttonSize };
         }
 
-        // Down arrow (left side, below up) - only if not at bottom
-        if (targetIndex > 0) {
+        // Down arrow (left side, below up) - show if can move down (to higher index)
+        if (targetIndex < totalFloors - 1) {
             const downX = this.floorX - buttonSize - buttonPadding;
-            const downY = centerY + buttonSize / 2 + 10;
+            const downY = centerY + 4;
 
             this.ctx.save();
             this.ctx.fillStyle = 'rgba(76, 175, 80, 0.9)';
             this.ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-            this.ctx.shadowBlur = 8;
-            this.ctx.shadowOffsetY = 3;
+            this.ctx.shadowBlur = 6;
+            this.ctx.shadowOffsetY = 2;
             this.ctx.beginPath();
             this.ctx.arc(downX + buttonSize / 2, downY + buttonSize / 2, buttonSize / 2, 0, Math.PI * 2);
             this.ctx.fill();
 
             // Arrow icon
             this.ctx.fillStyle = 'white';
-            this.ctx.font = 'bold 32px Arial';
+            this.ctx.font = 'bold 20px Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('▼', downX + buttonSize / 2, downY + buttonSize / 2);
@@ -2401,15 +2401,15 @@ class TowerRenderer {
         this.ctx.save();
         this.ctx.fillStyle = 'rgba(33, 150, 243, 0.9)';
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-        this.ctx.shadowBlur = 8;
-        this.ctx.shadowOffsetY = 3;
+        this.ctx.shadowBlur = 6;
+        this.ctx.shadowOffsetY = 2;
         this.ctx.beginPath();
         this.ctx.arc(doneX + buttonSize / 2, doneY + buttonSize / 2, buttonSize / 2, 0, Math.PI * 2);
         this.ctx.fill();
 
         // Checkmark icon
         this.ctx.fillStyle = 'white';
-        this.ctx.font = 'bold 32px Arial';
+        this.ctx.font = 'bold 20px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillText('✓', doneX + buttonSize / 2, doneY + buttonSize / 2);
@@ -2439,20 +2439,20 @@ class TowerRenderer {
         const reorderableFloors = this.game.floors.filter(f => f.typeId !== 'basement');
         const currentIndex = this.reorderTargetIndex;
 
-        // Check up arrow
+        // Check up arrow - move floor visually up (lower index in array)
         if (this.isPointInCircle(clickX, clickY, this._reorderUpBounds)) {
-            if (currentIndex < reorderableFloors.length - 1) {
-                this.reorderTargetIndex = currentIndex + 1;
+            if (currentIndex > 0) {
+                this.reorderTargetIndex = currentIndex - 1;
                 if (navigator.vibrate) navigator.vibrate(30);
                 console.log('Move up to index:', this.reorderTargetIndex);
             }
             return true;
         }
 
-        // Check down arrow
+        // Check down arrow - move floor visually down (higher index in array)
         if (this.isPointInCircle(clickX, clickY, this._reorderDownBounds)) {
-            if (currentIndex > 0) {
-                this.reorderTargetIndex = currentIndex - 1;
+            if (currentIndex < reorderableFloors.length - 1) {
+                this.reorderTargetIndex = currentIndex + 1;
                 if (navigator.vibrate) navigator.vibrate(30);
                 console.log('Move down to index:', this.reorderTargetIndex);
             }
