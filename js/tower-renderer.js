@@ -3234,6 +3234,59 @@ class TowerRenderer {
                 this.ctx.fillStyle = '#3D2817';
                 this.ctx.fillText(restroomTitle, restroomBannerX + restroomPadding, restroomBannerY + restroomBannerHeight / 2);
                 this.ctx.restore();
+
+                // Draw bathroom visitors with thought bubbles
+                const bathroomVisitorCount = 2;
+                const bathroomThoughts = ['💩 Poop!', '🚽 Flush!', '🧼 Wash!', '🧻 Paper!', '💦 Splash!'];
+                const scale = this.getScale();
+
+                for (let i = 0; i < bathroomVisitorCount; i++) {
+                    const visitorX = x + 80 + i * 150 * scale;
+                    const visitorY = y + this.floorHeight - 25;
+
+                    // Simple person (circle head, rectangle body)
+                    this.ctx.fillStyle = ['#FFB6C1', '#87CEEB', '#98FB98', '#DDA0DD'][i % 4];
+                    this.ctx.beginPath();
+                    this.ctx.arc(visitorX, visitorY - 15, 8, 0, Math.PI * 2);
+                    this.ctx.fill();
+
+                    // Body
+                    this.ctx.fillRect(visitorX - 6, visitorY - 7, 12, 15);
+
+                    // Thought bubble (rotating through thoughts)
+                    const thoughtIndex = (Math.floor(Date.now() / 2000) + i) % bathroomThoughts.length;
+                    const thought = bathroomThoughts[thoughtIndex];
+
+                    // Only show thought sometimes
+                    if ((Date.now() + i * 1000) % 3000 < 2000) {
+                        const bubbleWidth = 55;
+                        const bubbleHeight = 18;
+                        const bubbleX = visitorX;
+                        const bubbleY = visitorY - 40;
+
+                        // Bubble background
+                        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                        this.ctx.strokeStyle = '#ccc';
+                        this.ctx.lineWidth = 1;
+                        this.ctx.beginPath();
+                        this.ctx.roundRect(bubbleX - bubbleWidth/2, bubbleY - bubbleHeight/2, bubbleWidth, bubbleHeight, 5);
+                        this.ctx.fill();
+                        this.ctx.stroke();
+
+                        // Small bubbles
+                        this.ctx.beginPath();
+                        this.ctx.arc(bubbleX - 5, bubbleY + bubbleHeight/2 + 3, 3, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        this.ctx.stroke();
+
+                        // Thought text
+                        this.ctx.fillStyle = '#333';
+                        this.ctx.font = '10px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.textBaseline = 'middle';
+                        this.ctx.fillText(thought, bubbleX, bubbleY);
+                    }
+                }
                 break;
 
             case 'basement':
