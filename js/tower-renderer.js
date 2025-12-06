@@ -538,6 +538,16 @@ class TowerRenderer {
         };
         localHistoryBgImg.src = 'assets/floor-local_history.png';
 
+        // Load music practice rooms floor background
+        const musicPracticeBgImg = new Image();
+        musicPracticeBgImg.onload = () => {
+            this.sprites.floorBackgrounds['music_practice'] = musicPracticeBgImg;
+        };
+        musicPracticeBgImg.onerror = () => {
+            console.error('Failed to load music practice floor background');
+        };
+        musicPracticeBgImg.src = 'assets/floor-music_practice.png';
+
         // Load science floor background
         const scienceBgImg = new Image();
         scienceBgImg.onload = () => {
