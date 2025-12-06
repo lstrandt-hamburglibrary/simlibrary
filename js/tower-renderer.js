@@ -2491,6 +2491,7 @@ class TowerRenderer {
         this._reorderUpBounds = null;
         this._reorderDownBounds = null;
         this._reorderDoneBounds = null;
+        this._reorderExitTime = Date.now(); // Track when we exited to block subsequent clicks
         this.canvas.style.cursor = 'grab';
 
         if (navigator.vibrate) navigator.vibrate(50);
@@ -2500,6 +2501,10 @@ class TowerRenderer {
      * Handle canvas clicks
      */
     handleClick(e) {
+        // Block clicks that happen right after exiting reorder mode (prevents floor modal opening)
+        if (this._reorderExitTime && Date.now() - this._reorderExitTime < 300) {
+            return;
+        }
         // Don't process clicks if we were dragging
         if (this.isDragging) return;
 
