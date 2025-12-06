@@ -1636,6 +1636,66 @@ class GameState {
     }
 
     /**
+     * Get count of categories that need restocking
+     */
+    getRestockNeededCount() {
+        let count = 0;
+        this.floors.forEach(floor => {
+            if (floor.status !== 'ready') return;
+            floor.bookStock.forEach((category, idx) => {
+                // Check if unlocked by staff
+                if (floor.staff.length <= idx) return;
+                // Check if needs restocking (not full, not already restocking)
+                if (category.currentStock < category.maxStock && !category.restocking) {
+                    count++;
+                }
+            });
+        });
+        return count;
+    }
+
+    /**
+     * Restock all floors instantly with Tower Bucks
+     * Cost: 1 Tower Buck per 3 categories (minimum 1)
+     */
+    restockAll() {
+        const neededCount = this.getRestockNeededCount();
+        if (neededCount === 0) {
+            return { success: false, error: 'Nothing needs restocking' };
+        }
+
+        const cost = Math.max(1, Math.ceil(neededCount / 3));
+        if (this.towerBucks < cost) {
+            return { success: false, error: `Need ${cost} 💎 (you have ${this.towerBucks})` };
+        }
+
+        // Deduct cost
+        this.towerBucks -= cost;
+
+        // Restock all eligible categories instantly
+        let restocked = 0;
+        this.floors.forEach(floor => {
+            if (floor.status !== 'ready') return;
+            floor.bookStock.forEach((category, idx) => {
+                // Check if unlocked by staff
+                if (floor.staff.length <= idx) return;
+                // Restock if needed
+                if (category.currentStock < category.maxStock) {
+                    // If currently restocking, complete it
+                    if (category.restocking) {
+                        category.restocking = false;
+                    }
+                    category.currentStock = category.maxStock;
+                    restocked++;
+                }
+            });
+        });
+
+        this.save();
+        return { success: true, restocked, cost };
+    }
+
+    /**
      * Get floor by ID
      */
     getFloor(id) {

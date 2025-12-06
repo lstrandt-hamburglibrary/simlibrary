@@ -443,6 +443,38 @@ function setupEventListeners() {
         }
     });
 
+    // Restock All button
+    const restockBtn = document.getElementById('restock-all-btn');
+    restockBtn.addEventListener('click', () => {
+        haptic('medium');
+        const neededCount = game.getRestockNeededCount();
+        if (neededCount === 0) {
+            SoundManager.error();
+            showPopup('Restock All', 'All categories are fully stocked!', null, null, null, 'OK');
+            return;
+        }
+        const cost = Math.max(1, Math.ceil(neededCount / 3));
+        showPopup(
+            'Restock All',
+            `Instantly restock ${neededCount} ${neededCount === 1 ? 'category' : 'categories'}?\n\nCost: ${cost} 💎`,
+            () => {
+                const result = game.restockAll();
+                if (result.success) {
+                    SoundManager.restock();
+                    updateDisplay();
+                    showPopup('Restocked!', `${result.count} ${result.count === 1 ? 'category' : 'categories'} restocked instantly!`, null, null, null, 'OK');
+                } else {
+                    SoundManager.error();
+                    showPopup('Cannot Restock', result.error, null, null, null, 'OK');
+                }
+            },
+            null,
+            null,
+            'Restock',
+            'Cancel'
+        );
+    });
+
     // Help button - opens help modal
     const helpBtn = document.getElementById('open-help-btn');
     helpBtn.addEventListener('click', () => {
