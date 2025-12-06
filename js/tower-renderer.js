@@ -518,6 +518,16 @@ class TowerRenderer {
         };
         hotDrinksCafeBgImg.src = 'assets/floor-hot_drinks_cafe.png';
 
+        // Load genealogy floor background
+        const genealogyBgImg = new Image();
+        genealogyBgImg.onload = () => {
+            this.sprites.floorBackgrounds['genealogy'] = genealogyBgImg;
+        };
+        genealogyBgImg.onerror = () => {
+            console.error('Failed to load genealogy floor background');
+        };
+        genealogyBgImg.src = 'assets/floor-genealogy.png';
+
         // Load science floor background
         const scienceBgImg = new Image();
         scienceBgImg.onload = () => {
