@@ -1139,23 +1139,26 @@ class TowerRenderer {
      * Draw a ready floor with book shelves and readers
      */
     drawReadyFloor(floor, x, y, colors, floorIndex) {
-        // Floor name/number with background
+        // Floor name - centered, library-themed banner style
         this.ctx.save();
 
-        // Measure text width for background rectangle
-        this.ctx.font = 'bold 14px Arial';
-        const textMetrics = this.ctx.measureText(`${floor.emoji} ${floor.name}`);
-        const textWidth = textMetrics.width;
+        const centerX = x + this.floorWidth / 2;
+        const titleY = y + 18;
+        const titleText = `${floor.emoji} ${floor.name}`;
 
-        // Draw semi-transparent background behind text
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'; // White with 95% opacity
-        this.ctx.fillRect(x + 8, y + 10, textWidth + 8, 18);
+        // Elegant serif-style font
+        this.ctx.font = 'bold 13px Georgia, serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
 
-        // Draw floor name text
-        this.ctx.fillStyle = '#000';
-        this.ctx.textAlign = 'left';
-        this.ctx.textBaseline = 'top';
-        this.ctx.fillText(`${floor.emoji} ${floor.name}`, x + 10, y + 12);
+        // Text shadow for depth
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        this.ctx.fillText(titleText, centerX + 1, titleY + 1);
+
+        // Main text in warm library brown
+        this.ctx.fillStyle = '#4A3728';
+        this.ctx.fillText(titleText, centerX, titleY);
+
         this.ctx.restore();
 
         // Check if this is a special room or utility room
