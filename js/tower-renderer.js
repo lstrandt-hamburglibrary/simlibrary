@@ -3042,11 +3042,16 @@ class TowerRenderer {
         const centerX = x + this.floorWidth / 2;
         const centerY = y + this.floorHeight / 2;
 
-        // Draw bonus description
-        this.ctx.fillStyle = '#666';
-        this.ctx.font = '12px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText(floorType.bonus.description, centerX, y + 35);
+        // Rooms with custom background images - don't draw text overlay
+        const roomsWithBackgrounds = ['study_room', 'maker_space'];
+
+        // Draw bonus description only for rooms without custom backgrounds
+        if (!roomsWithBackgrounds.includes(floorType.id)) {
+            this.ctx.fillStyle = '#666';
+            this.ctx.font = '12px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(floorType.bonus.description, centerX, y + 35);
+        }
 
         // Draw themed elements based on room type
         switch(floorType.id) {
